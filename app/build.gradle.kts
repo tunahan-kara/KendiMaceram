@@ -41,6 +41,10 @@ android {
 
 dependencies {
 
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1") // Versiyon numarasını en güncel olanla değiştirebilirsin
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
