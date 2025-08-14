@@ -18,5 +18,6 @@ data class StoryNode(
 // UI'ın ihtiyacı olan tüm veriyi bir arada tutan yardımcı data class.
 // ViewModel'den BAĞIMSIZ, kendi dosyasında duruyor.
 data class StoryUiState(
-    val currentNode: StoryNode? = null
+    val currentNode: StoryNode? = null,
+    val highlightRange: IntRange? = null
 )
