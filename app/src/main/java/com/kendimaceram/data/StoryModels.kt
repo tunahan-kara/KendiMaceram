@@ -19,5 +19,6 @@ data class StoryNode(
 // ViewModel'den BAĞIMSIZ, kendi dosyasında duruyor.
 data class StoryUiState(
     val currentNode: StoryNode? = null,
-    val highlightRange: IntRange? = null
+    val highlightRange: IntRange? = null,
+    val isLoading: Boolean = false
 )

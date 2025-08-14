@@ -1,43 +1,51 @@
 package com.kendimaceram.app.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.kendimaceram.app.data.StoryNode
 import com.kendimaceram.app.data.StoryRepository
 import com.kendimaceram.app.data.StoryUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class StoryViewModel : ViewModel() {
+@HiltViewModel
+class StoryViewModel @Inject constructor() : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoryUiState())
     val uiState: StateFlow<StoryUiState> = _uiState.asStateFlow()
 
-    init {
-        startStory()
+    private var storyNodes: Map<String, StoryNode> = emptyMap()
+
+    // init bloğu artık boş. Hikaye, dışarıdan gelen komutla yüklenecek.
+    init {}
+
+    // StoryReaderScreen'in aradığı ve hata veren fonksiyon buydu. Artık var!
+    fun loadStory(storyDocId: String) {
+        // Eğer geçersiz bir ID gelirse (örneğin ilk açılışta), bir şey yapma.
+        if (storyDocId == "N/A" || storyDocId.isEmpty()) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            storyNodes = StoryRepository.fetchStoryNodes(storyDocId)
+            val startNode = storyNodes["start"]
+            _uiState.update { it.copy(currentNode = startNode, isLoading = false) }
+        }
     }
 
-    private fun startStory() {
-        val startNode = StoryRepository.getNode("start")
-        _uiState.update { it.copy(currentNode = startNode) }
-    }
-
-    // Kullanıcı bir seçim yaptığında bu fonksiyon çağrılacak.
     fun makeChoice(choiceNodeId: String) {
-        val nextNode = StoryRepository.getNode(choiceNodeId)
-        // Yeni bir seçime geçildiğinde eski vurguyu temizliyoruz.
+        val nextNode = storyNodes[choiceNodeId]
         _uiState.update { it.copy(currentNode = nextNode, highlightRange = null) }
     }
 
-    // YENİ EKLENEN FONKSİYON 1: Vurgulanacak aralığı güncellemek için.
-    // MainActivity'nin aradığı fonksiyonlardan biri bu.
     fun updateHighlightRange(range: IntRange) {
         _uiState.update { it.copy(highlightRange = range) }
     }
 
-    // YENİ EKLENEN FONKSİYON 2: Vurguyu temizlemek için.
-    // MainActivity'nin aradığı diğer fonksiyon da bu.
     fun clearHighlight() {
         _uiState.update { it.copy(highlightRange = null) }
     }
