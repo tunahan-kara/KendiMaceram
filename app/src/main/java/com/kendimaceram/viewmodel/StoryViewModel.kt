@@ -1,3 +1,4 @@
+// viewmodel/StoryViewModel.kt
 package com.kendimaceram.app.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -14,28 +15,25 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class StoryViewModel @Inject constructor() : ViewModel() {
+class StoryViewModel @Inject constructor(
+    private val repository: StoryRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StoryUiState())
     val uiState: StateFlow<StoryUiState> = _uiState.asStateFlow()
 
     private var storyNodes: Map<String, StoryNode> = emptyMap()
 
-    // init bloğu artık boş. Hikaye, dışarıdan gelen komutla yüklenecek.
-    init {}
-
-    // StoryReaderScreen'in aradığı ve hata veren fonksiyon buydu. Artık var!
     fun loadStory(storyDocId: String) {
-        // Eğer geçersiz bir ID gelirse (örneğin ilk açılışta), bir şey yapma.
-        if (storyDocId == "N/A" || storyDocId.isEmpty()) return
-
+        if (storyDocId.isEmpty() || storyDocId == "{storyId}") return
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            storyNodes = StoryRepository.fetchStoryNodes(storyDocId)
+            storyNodes = repository.getLocalStoryNodes(storyDocId)
             val startNode = storyNodes["start"]
             _uiState.update { it.copy(currentNode = startNode, isLoading = false) }
         }
     }
+
 
     fun makeChoice(choiceNodeId: String) {
         val nextNode = storyNodes[choiceNodeId]

@@ -18,7 +18,9 @@ import com.kendimaceram.app.ui.screens.NewStoriesScreen
 import com.kendimaceram.app.ui.screens.PremiumScreen
 import com.kendimaceram.app.ui.screens.StoryReaderScreen
 import com.kendimaceram.app.ui.theme.KendiMaceramTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

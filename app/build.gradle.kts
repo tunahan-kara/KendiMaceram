@@ -53,7 +53,9 @@ dependencies {
     kapt("com.google.dagger:hilt-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
+    implementation("com.google.code.gson:gson:2.10.1")
 
+    implementation("com.google.code.gson:gson:2.10.1")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

@@ -1,20 +1,37 @@
+// data/StoryRepository.kt
 package com.kendimaceram.app.data
 
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object StoryRepository {
+@Singleton
+class StoryRepository @Inject constructor(
+    private val localDataSource: LocalStoryDataSource
+) {
     private val db = Firebase.firestore
 
-    // Bu fonksiyon artık Firestore'dan canlı veri çeker.
-    suspend fun fetchStoryNodes(storyDocId: String): Map<String, StoryNode> {
-        val storyNodesMap = mutableMapOf<String, StoryNode>()
+    // Bu fonksiyon Firestore'dan veriyi çeker ve LocalStoryDataSource'u kullanarak telefona kaydeder.
+    suspend fun downloadAndSaveStory(storyDocId: String) {
         try {
             val document = db.collection("stories").document(storyDocId).get().await()
-            @Suppress("UNCHECKED_CAST")
-            val nodesData = document.get("nodes") as? Map<String, Map<String, Any>> ?: return emptyMap()
+            document.data?.let { data ->
+                localDataSource.saveStory(storyDocId, data)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
+    // Bu fonksiyon telefondaki (lokal) hikaye dosyasını okur ve kodun anlayacağı formata çevirir.
+    suspend fun getLocalStoryNodes(storyId: String): Map<String, StoryNode> {
+        val storyData = localDataSource.getStory(storyId) ?: return emptyMap()
+        val storyNodesMap = mutableMapOf<String, StoryNode>()
+        try {
+            @Suppress("UNCHECKED_CAST")
+            val nodesData = storyData["nodes"] as? Map<String, Map<String, Any>> ?: return emptyMap()
             for ((nodeId, nodeData) in nodesData) {
                 val id = nodeData["id"] as? String ?: ""
                 val text = nodeData["text"] as? String ?: ""
