@@ -60,4 +60,16 @@ class LocalStoryDataSource @Inject constructor(
             null
         }
     }
+
+
+    // silme işlemini yapacak fonksiyon
+    fun deleteStory(storyId: String): Boolean {
+        val file = File(storiesDir, "$storyId.json")
+        return if (file.exists()) {
+            file.delete()
+        } else {
+            false
+        }
+    }
+
 }

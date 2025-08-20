@@ -25,4 +25,15 @@ class MyStoriesViewModel @Inject constructor(
     fun loadDownloadedStories() {
         _stories.value = localStoryDataSource.getDownloadedStoryList()
     }
+
+    // YENİ FONKSİYON
+    fun deleteStory(storyId: String) {
+        val isDeleted = localStoryDataSource.deleteStory(storyId)
+        if (isDeleted) {
+            // Silme işlemi başarılıysa, ekrandaki listeyi anında güncellemek için
+            // listeyi yeniden yükle.
+            loadDownloadedStories()
+        }
+    }
+
 }
