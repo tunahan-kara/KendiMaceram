@@ -1,4 +1,3 @@
-// MainActivity.kt (YENİ VE TAM HALİ)
 package com.kendimaceram.app
 
 import android.os.Bundle
@@ -12,11 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.kendimaceram.app.ui.navigation.Screen
-import com.kendimaceram.app.ui.screens.HomeScreen
-import com.kendimaceram.app.ui.screens.MyStoriesScreen
-import com.kendimaceram.app.ui.screens.NewStoriesScreen
-import com.kendimaceram.app.ui.screens.PremiumScreen
-import com.kendimaceram.app.ui.screens.StoryReaderScreen
+import com.kendimaceram.app.ui.screens.*
 import com.kendimaceram.app.ui.theme.KendiMaceramTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,19 +21,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             KendiMaceramTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    // Navigasyon kontrolcüsünü oluşturuyoruz.
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     val navController = rememberNavController()
-
-                    // NavHost, hangi adreste hangi ekranın gösterileceğini belirleyen ana yapıdır.
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Home.route // Uygulama bu ekrandan başlayacak
+                        startDestination = Screen.Login.route // Başlangıç noktası
                     ) {
-                        // Her bir ekran için bir rota tanımlıyoruz.
+                        // Rotaların tanımlandığı yer
                         composable(route = Screen.Home.route) {
                             HomeScreen(navController = navController)
                         }
@@ -52,9 +41,14 @@ class MainActivity : ComponentActivity() {
                             PremiumScreen(navController = navController)
                         }
                         composable(route = Screen.StoryReader.route) { backStackEntry ->
-                            // Hikaye okuma ekranına şimdilik boş bir veri yolluyoruz.
-                            val storyId = backStackEntry.arguments?.getString("storyId") ?: "N/A"
+                            val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
                             StoryReaderScreen(navController = navController, storyId = storyId)
+                        }
+                        composable(route = Screen.Login.route) {
+                            LoginScreen(navController = navController)
+                        }
+                        composable(route = Screen.Register.route) {
+                            RegisterScreen(navController = navController)
                         }
                     }
                 }

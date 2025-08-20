@@ -1,4 +1,3 @@
-// Screen.kt
 package com.kendimaceram.app.ui.navigation
 
 sealed class Screen(val route: String) {
@@ -9,4 +8,6 @@ sealed class Screen(val route: String) {
     data object StoryReader : Screen("story_reader_screen/{storyId}") {
         fun createRoute(storyId: String) = "story_reader_screen/$storyId"
     }
+    data object Login : Screen("login_screen")
+    data object Register : Screen("register_screen")
 }
