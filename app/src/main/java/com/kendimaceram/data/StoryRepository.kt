@@ -13,7 +13,21 @@ class StoryRepository @Inject constructor(
 ) {
     private val db = Firebase.firestore
 
-    // Bu fonksiyon Firestore'dan veriyi çeker ve LocalStoryDataSource'u kullanarak telefona kaydeder.
+    suspend fun getAllStoriesMetadataFromFirestore(): List<StoryMetadata> {
+        return try {
+            val documents = db.collection("stories").get().await()
+            documents.map { doc ->
+                StoryMetadata(
+                    id = doc.id,
+                    title = doc.getString("title") ?: "Başlıksız Hikaye"
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
     suspend fun downloadAndSaveStory(storyDocId: String) {
         try {
             val document = db.collection("stories").document(storyDocId).get().await()
@@ -25,7 +39,6 @@ class StoryRepository @Inject constructor(
         }
     }
 
-    // Bu fonksiyon telefondaki (lokal) hikaye dosyasını okur ve kodun anlayacağı formata çevirir.
     suspend fun getLocalStoryNodes(storyId: String): Map<String, StoryNode> {
         val storyData = localDataSource.getStory(storyId) ?: return emptyMap()
         val storyNodesMap = mutableMapOf<String, StoryNode>()

@@ -1,3 +1,4 @@
+// ui/screens/HomeScreen.kt
 package com.kendimaceram.app.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -14,13 +15,11 @@ import com.kendimaceram.app.ui.navigation.Screen
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    // Ekranın içeriğini MainScaffold ile sarmalıyoruz
     MainScaffold(navController = navController) { innerPadding ->
-        // Column'a innerPadding'i uyguluyoruz ki içerik üst barın altına girmesin
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // <-- ÖNEMLİ DEĞİŞİKLİK
+                .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
