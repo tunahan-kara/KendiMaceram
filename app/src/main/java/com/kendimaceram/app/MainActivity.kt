@@ -25,8 +25,12 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Login.route // Başlangıç noktası
+                        startDestination = Screen.Splash.route // Yeni başlangıç noktası
                     ) {
+
+                        composable(route = Screen.Splash.route) {
+                            SplashScreen(navController = navController)
+                        }
                         // Rotaların tanımlandığı yer
                         composable(route = Screen.Home.route) {
                             HomeScreen(navController = navController)
@@ -47,6 +51,10 @@ class MainActivity : ComponentActivity() {
                         composable(route = Screen.Login.route) {
                             LoginScreen(navController = navController)
                         }
+                        composable(route = Screen.Register.route) {
+                            RegisterScreen(navController = navController)
+                        }
+
                         composable(route = Screen.Register.route) {
                             RegisterScreen(navController = navController)
                         }
