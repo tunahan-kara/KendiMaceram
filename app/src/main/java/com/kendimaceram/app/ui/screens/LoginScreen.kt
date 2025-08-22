@@ -1,4 +1,3 @@
-// ui/screens/LoginScreen.kt
 package com.kendimaceram.app.ui.screens
 
 import android.widget.Toast
@@ -13,7 +12,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.kendimaceram.app.data.AuthResource // <-- EN ÖNEMLİ SATIR BU
+import com.kendimaceram.app.data.AuthResource
 import com.kendimaceram.app.ui.components.MainScaffold
 import com.kendimaceram.app.ui.navigation.Screen
 import com.kendimaceram.app.viewmodel.LoginViewModel
@@ -30,15 +29,15 @@ fun LoginScreen(
         viewModel.eventFlow.collectLatest { result ->
             when (result) {
                 is AuthResource.Success -> {
-                    navController.navigate(Screen.Home.route) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    // DEĞİŞİKLİK BURADA: Artık "Home" yerine "NewStories" ekranına gidiyoruz.
+                    navController.navigate(Screen.NewStories.route) {
+                        // Tüm giriş/kayıt ekranlarını geçmişten temizle.
+                        popUpTo(navController.graph.id) { inclusive = true }
                     }
                 }
                 is AuthResource.Failure -> {
                     Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
                 }
-
-                else -> {}
             }
         }
     }
@@ -53,14 +52,14 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(32.dp))
             OutlinedTextField(
                 value = viewModel.email,
-                onValueChange = { viewModel.email = it }, // <-- DÜZELTME BURADA
+                onValueChange = { viewModel.email = it },
                 label = { Text("E-posta") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = viewModel.password,
-                onValueChange = { viewModel.password = it }, // <-- DÜZELTME BURADA
+                onValueChange = { viewModel.password = it },
                 label = { Text("Şifre") },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation()

@@ -18,21 +18,19 @@ fun SplashScreen(
     navController: NavController,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
-    // Bu kod, ekran göründüğü anda sadece bir kere çalışır.
     LaunchedEffect(key1 = true) {
-        // Estetik olarak daha hoş görünmesi için 1 saniye bekleyelim.
         delay(1000L)
 
-        // Yönlendirme: popUpTo ile splash ekranını navigasyon geçmişinden siliyoruz
-        // ki kullanıcı geri tuşuna basınca bu ekrana dönemesin.
-        navController.navigate(
-            if (viewModel.isUserAuthenticated) Screen.Home.route else Screen.Login.route
-        ) {
+        // ---- DEĞİŞİKLİK BURADA ----
+        // Artık kullanıcı giriş yapmışsa onu "Home" yerine "NewStories" ekranına yönlendiriyoruz.
+        val startDestination = if (viewModel.isUserAuthenticated) Screen.NewStories.route else Screen.Login.route
+
+        navController.navigate(startDestination) {
+            // Splash ekranını navigasyon geçmişinden siliyoruz.
             popUpTo(Screen.Splash.route) { inclusive = true }
         }
     }
 
-    // Yönlendirme yapılırken ekranda bir yüklenme animasyonu göster.
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center

@@ -17,41 +17,56 @@ fun MainScaffold(
     navController: NavController,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    // Mevcut rotayı (adresi) dinliyoruz
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Rotaya göre başlığı ve geri butonunun görünüp görünmeyeceğini belirliyoruz
+
+    val bottomNavRoutes = listOf(
+        Screen.MyStories.route,
+        Screen.NewStories.route,
+        Screen.Premium.route,
+        Screen.Profile.route //
+    )
+    val shouldShowBottomBar = currentRoute in bottomNavRoutes
+
+
     val screenTitle = when (currentRoute) {
-        Screen.Home.route -> "Ana Ekran"
         Screen.MyStories.route -> "Hikayelerim"
-        Screen.NewStories.route -> "Yeni Hikayeler"
+        Screen.NewStories.route -> "Keşfet"
         Screen.Premium.route -> "Premium Üyelik"
-        else -> "Kendi Maceram"
+        Screen.Profile.route -> "Hesabım" //
+        Screen.Login.route -> "Giriş Yap"
+        Screen.Register.route -> "Kayıt Ol"
+        else -> ""
     }
 
-    val showBackButton = navController.previousBackStackEntry != null && currentRoute != Screen.Home.route
+
+    val showBackButton = navController.previousBackStackEntry != null && !shouldShowBottomBar
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text(text = screenTitle, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    // Eğer geri butonu gösterilecekse, IconButton'u oluştur
-                    if (showBackButton) {
-                        IconButton(onClick = { navController.navigateUp() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Geri Butonu"
-                            )
+            if (screenTitle.isNotEmpty()) {
+                CenterAlignedTopAppBar(
+                    title = { Text(text = screenTitle, fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        if (showBackButton) {
+                            IconButton(onClick = { navController.navigateUp() }) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Geri Butonu"
+                                )
+                            }
                         }
                     }
-                }
-            )
+                )
+            }
+        },
+        bottomBar = {
+            if (shouldShowBottomBar) {
+                BottomNavigationBar(navController = navController)
+            }
         }
     ) { innerPadding ->
-        // Bu, ekranın asıl içeriğinin geleceği yer.
-        // innerPadding, içeriğin üst barın altına gizlenmemesini sağlar.
         content(innerPadding)
     }
 }

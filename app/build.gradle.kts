@@ -46,20 +46,16 @@ android {
 dependencies {
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1") // Versiyon numarasını en güncel olanla değiştirebilirsin
-
     implementation("androidx.navigation:navigation-compose:2.7.7")
-
     implementation("com.google.dagger:hilt-android:2.48")
     kapt("com.google.dagger:hilt-compiler:2.48")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-
     implementation("com.google.code.gson:gson:2.10.1")
-
     implementation("com.google.code.gson:gson:2.10.1")
-
     implementation("androidx.compose.material:material-icons-extended-android:1.6.8")
-
     implementation(libs.firebase.auth)
+
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

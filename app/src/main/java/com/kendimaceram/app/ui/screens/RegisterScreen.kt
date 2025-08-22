@@ -1,4 +1,3 @@
-// ui/screens/RegisterScreen.de
 package com.kendimaceram.app.ui.screens
 
 import android.widget.Toast
@@ -13,7 +12,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.kendimaceram.app.data.AuthResource // <-- EN ÖNEMLİ SATIR BU
+import com.kendimaceram.app.data.AuthResource
 import com.kendimaceram.app.ui.components.MainScaffold
 import com.kendimaceram.app.ui.navigation.Screen
 import com.kendimaceram.app.viewmodel.RegisterViewModel
@@ -31,15 +30,15 @@ fun RegisterScreen(
             when (result) {
                 is AuthResource.Success -> {
                     Toast.makeText(context, "Kayıt başarılı! Lütfen giriş yapın.", Toast.LENGTH_SHORT).show()
+                    // DEĞİŞİKLİK BURADA: popUpTo kısmını düzelttik.
                     navController.navigate(Screen.Login.route) {
-                        popUpTo(Screen.Home.route)
+                        // Kayıt ekranını geçmişten silerek geri dönülmesini engelle.
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
                 is AuthResource.Failure -> {
                     Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
                 }
-
-                else -> {}
             }
         }
     }
