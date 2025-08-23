@@ -1,4 +1,3 @@
-// viewmodel/NewStoriesViewModel.kt
 package com.kendimaceram.app.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -13,18 +12,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// UI'ın listeleyeceği her bir elemanın durumunu tutan data class
+// EKSİK OLAN PARÇA 1: UI'ın listeleyeceği her bir elemanın durumunu tutan data class
 data class StoryListItemState(
     val id: String,
     val title: String,
     val isDownloaded: Boolean
 )
 
-// Ekranın genel durumunu tutan data class
+// EKSİK OLAN PARÇA 2: Ekranın genel durumunu tutan data class
 data class AllStoriesUiState(
     val stories: List<StoryListItemState> = emptyList(),
     val isLoading: Boolean = false,
-    val downloadingStoryId: String? = null // Hangi hikayenin indirildiğini takip etmek için
+    val downloadingStoryId: String? = null
 )
 
 @HiltViewModel
@@ -44,18 +43,19 @@ class NewStoriesViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // 1. İnternetten tüm hikayelerin listesini çek
-            val remoteStories = repository.getAllStoriesMetadataFromFirestore()
-            // 2. Telefondaki indirilmiş hikayelerin listesini çek
-            val localStories = localDataSource.getDownloadedStoryList()
-            val localStoryIds = localStories.map { it.id }.toSet()
+            // 1. İnternetten tüm hikayelerin genel listesini çek
+            val allAvailableStories = repository.getAllStoriesMetadataFromFirestore()
 
-            // 3. İki listeyi karşılaştırarak son listeyi oluştur
-            val combinedList = remoteStories.map { remoteStory ->
+            // 2. Telefonun hafızasında GERÇEKTEN yüklü olan hikayelerin ID'lerini al
+            val locallyPresentStoryIds = localDataSource.getDownloadedStoryList().map { it.id }.toSet()
+
+            // 3. Bu iki bilgiyi karşılaştırarak son listeyi oluştur
+            val combinedList = allAvailableStories.map { story ->
                 StoryListItemState(
-                    id = remoteStory.id,
-                    title = remoteStory.title,
-                    isDownloaded = remoteStory.id in localStoryIds
+                    id = story.id,
+                    title = story.title,
+                    // "isDownloaded" durumu artık sadece telefonda dosya varsa true olacak.
+                    isDownloaded = story.id in locallyPresentStoryIds
                 )
             }
 
@@ -65,10 +65,9 @@ class NewStoriesViewModel @Inject constructor(
 
     fun downloadStory(storyId: String) {
         viewModelScope.launch {
-            // İndirme başladığında hangi hikayenin indirildiğini state'e bildir
             _uiState.update { it.copy(downloadingStoryId = storyId) }
             repository.downloadAndSaveStory(storyId)
-            // İndirme bittiğinde listeyi yenile ve indirme durumunu sıfırla
+            // İndirme sonrası listeyi yenileyerek butonun "Aç" olmasını sağla
             loadAllStories()
             _uiState.update { it.copy(downloadingStoryId = null) }
         }

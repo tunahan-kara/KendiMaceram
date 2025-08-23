@@ -1,4 +1,3 @@
-// viewmodel/StoryViewModel.kt
 package com.kendimaceram.app.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -24,16 +23,28 @@ class StoryViewModel @Inject constructor(
 
     private var storyNodes: Map<String, StoryNode> = emptyMap()
 
+    // Bu fonksiyon artık çok daha akıllı.
     fun loadStory(storyDocId: String) {
         if (storyDocId.isEmpty() || storyDocId == "{storyId}") return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            storyNodes = repository.getLocalStoryNodes(storyDocId)
+
+            // Önce lokalde (telefonda) hikaye var mı diye kontrol et
+            var storyNodesMap = repository.getLocalStoryNodes(storyDocId)
+
+            // Eğer lokalde yoksa (kullanıcı silmişse), internetten yeniden indir
+            if (storyNodesMap.isEmpty()) {
+                repository.downloadAndSaveStory(storyDocId)
+                // İndirdikten sonra lokalden tekrar oku
+                storyNodesMap = repository.getLocalStoryNodes(storyDocId)
+            }
+
+            storyNodes = storyNodesMap
             val startNode = storyNodes["start"]
             _uiState.update { it.copy(currentNode = startNode, isLoading = false) }
         }
     }
-
 
     fun makeChoice(choiceNodeId: String) {
         val nextNode = storyNodes[choiceNodeId]

@@ -1,4 +1,3 @@
-// ui/screens/NewStoriesScreen.kt
 package com.kendimaceram.app.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -27,7 +26,10 @@ fun NewStoriesScreen(
 
     MainScaffold(navController = navController) { innerPadding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
             if (uiState.isLoading) {
@@ -71,11 +73,10 @@ fun AllStoriesListItem(
             } else {
                 Button(onClick = onDownloadClick, enabled = !isDownloading) {
                     if (isDownloading) {
-                        // DÜZELTME BURADA: SizedBox yerine Box kullandık.
                         Box(modifier = Modifier.size(24.dp)) {
                             CircularProgressIndicator(
                                 color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp // Daha ince bir görünüm için
+                                strokeWidth = 2.dp
                             )
                         }
                     } else {
