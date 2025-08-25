@@ -40,17 +40,17 @@ fun ProfileScreen(
             ProfileMenuItem(
                 icon = Icons.Default.Person,
                 text = "Hesap Bilgileri",
-                onClick = { Toast.makeText(context, "Hesap Bilgileri tıklandı", Toast.LENGTH_SHORT).show() }
+                onClick = { navController.navigate(Screen.AccountInfo.route) }
             )
             ProfileMenuItem(
                 icon = Icons.Default.Notifications,
                 text = "Bildirim Ayarları",
-                onClick = { Toast.makeText(context, "Bildirim Ayarları tıklandı", Toast.LENGTH_SHORT).show() }
+                onClick = { navController.navigate(Screen.NotificationSettings.route) }
             )
             ProfileMenuItem(
                 icon = Icons.Default.Palette,
                 text = "Tema",
-                onClick = { Toast.makeText(context, "Tema tıklandı", Toast.LENGTH_SHORT).show() }
+                onClick = { navController.navigate(Screen.ThemeSettings.route) }
             )
             ProfileMenuItem(
                 icon = Icons.Default.Favorite,
@@ -60,7 +60,7 @@ fun ProfileScreen(
             ProfileMenuItem(
                 icon = Icons.Default.HelpOutline,
                 text = "Yardım & Destek",
-                onClick = { Toast.makeText(context, "Yardım & Destek tıklandı", Toast.LENGTH_SHORT).show() }
+                onClick = { navController.navigate(Screen.Help.route) }
             )
             ProfileMenuItem(
                 icon = Icons.Default.StarRate,

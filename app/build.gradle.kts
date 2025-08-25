@@ -54,7 +54,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("androidx.compose.material:material-icons-extended-android:1.6.8")
     implementation(libs.firebase.auth)
-
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.18.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
 
 
     implementation(libs.androidx.core.ktx)

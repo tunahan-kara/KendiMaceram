@@ -8,32 +8,50 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.kendimaceram.app.data.SettingsRepository
+import com.kendimaceram.app.data.ThemeSetting
 import com.kendimaceram.app.ui.navigation.Screen
 import com.kendimaceram.app.ui.screens.*
 import com.kendimaceram.app.ui.theme.KendiMaceramTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    // Ayarları okumak için SettingsRepository'yi enjekte ediyoruz.
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            KendiMaceramTheme {
+            // Kullanıcının tema seçimini DataStore'dan anlık olarak dinliyoruz.
+            val themeSetting by settingsRepository.themeSettingFlow.collectAsState(initial = ThemeSetting.SYSTEM)
+
+            // Hangi temanın kullanılacağına karar veriyoruz.
+            val useDarkTheme = when (themeSetting) {
+                ThemeSetting.SYSTEM -> isSystemInDarkTheme()
+                ThemeSetting.LIGHT -> false
+                ThemeSetting.DARK -> true
+            }
+
+            KendiMaceramTheme(darkTheme = useDarkTheme) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .safeDrawingPadding(),
+                    modifier = Modifier.fillMaxSize(), // Edge-to-edge için padding'i Theme'e taşıdık
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
@@ -81,13 +99,48 @@ class MainActivity : ComponentActivity() {
                         ) {
                             PremiumScreen(navController = navController)
                         }
-                        // YENİ EKRANIMIZI NAVHOST'A EKLİYORUZ
                         composable(
                             route = Screen.Profile.route,
                             enterTransition = { fadeIn(animationSpec = tween(300)) },
                             exitTransition = { fadeOut(animationSpec = tween(300)) }
                         ) {
                             ProfileScreen(navController = navController)
+                        }
+                        composable(
+                            route = Screen.AccountInfo.route,
+                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
+                        ) {
+                            AccountInfoScreen(navController = navController)
+                        }
+                        composable(
+                            route = Screen.NotificationSettings.route,
+                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
+                        ) {
+                            NotificationSettingsScreen(navController = navController)
+                        }
+                        composable(
+                            route = Screen.ThemeSettings.route,
+                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
+                        ) {
+                            ThemeSettingsScreen(navController = navController)
+                        }
+                        composable(
+                            route = Screen.Help.route,
+                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
+                        ) {
+                            HelpScreen(navController = navController)
                         }
                         composable(
                             route = Screen.StoryReader.route,
