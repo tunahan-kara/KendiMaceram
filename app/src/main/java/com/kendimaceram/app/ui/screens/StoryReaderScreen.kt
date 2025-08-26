@@ -32,12 +32,17 @@ fun StoryReaderScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    // TTS motorunu Composable içinde güvenli bir şekilde tutmak için
     val tts = remember { mutableStateOf<TextToSpeech?>(null) }
 
+    // Ekran açıldığında hikayeyi yükle
     LaunchedEffect(key1 = Unit) {
         viewModel.loadStory(storyId)
     }
 
+    // Bu Composable ekrandan ayrılırken (örn: geri tuşuna basınca)
+    // TTS motorunu güvenle kapatır ve hafıza sızıntısını önler.
     DisposableEffect(key1 = Unit) {
         onDispose {
             tts.value?.stop()
@@ -46,14 +51,16 @@ fun StoryReaderScreen(
         }
     }
 
+    // Hikaye metni her değiştiğinde bu blok tetiklenir ve yeni metni okur.
     LaunchedEffect(key1 = uiState.currentNode) {
         uiState.currentNode?.text?.let { newText ->
-            tts.value?.stop()
-            tts.value?.shutdown()
+            tts.value?.stop() // Önceki konuşmayı durdur (varsa)
 
+            // Yeni bir TTS motoru oluştur
             tts.value = TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
                     tts.value?.language = Locale("tr", "TR")
+                    // Kelime vurgulama için listener'ımızı ayarlıyoruz
                     tts.value?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                         override fun onStart(utteranceId: String?) { viewModel.clearHighlight() }
                         override fun onDone(utteranceId: String?) { viewModel.clearHighlight() }
@@ -62,6 +69,7 @@ fun StoryReaderScreen(
                             viewModel.updateHighlightRange(IntRange(start, end))
                         }
                     })
+                    // Konuşmayı başlat
                     val utteranceId = UUID.randomUUID().toString()
                     tts.value?.speak(newText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
                 } else {
@@ -91,7 +99,7 @@ fun StoryReaderScreen(
     }
 }
 
-// BU YARDIMCI COMPOSABLE'I OTOMATİK KAYDIRMA İÇİN GÜNCELLİYORUZ
+// Bu yardımcı Composable, UI'ı çizmekten sorumlu.
 @Composable
 private fun StoryScreenContent(
     storyText: String,
@@ -99,20 +107,14 @@ private fun StoryScreenContent(
     highlightRange: IntRange?,
     onChoiceSelected: (String) -> Unit
 ) {
-    // 1. Kaydırma durumunu ve coroutine scope'u hatırlıyoruz
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
 
-    // 2. highlightRange her değiştiğinde bu blok çalışır
     LaunchedEffect(highlightRange) {
         if (highlightRange != null && textLayoutResult != null) {
-            // Parlayan kelimenin satır numarasını bul
             val line = textLayoutResult!!.getLineForOffset(highlightRange.first)
-            // O satırın ekrandaki Y pozisyonunu bul (biraz üstten boşluk bırakalım)
             val lineTopY = textLayoutResult!!.getLineTop(line) - 100
-
-            // Ekranda o pozisyona doğru yumuşak bir şekilde kaydır
             coroutineScope.launch {
                 scrollState.animateScrollTo(lineTopY.toInt().coerceAtLeast(0))
             }
@@ -124,9 +126,8 @@ private fun StoryScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp)
-                // 3. Column'a dikey kaydırma özelliği ekliyoruz
                 .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally // Butonları ortalamak için
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val annotatedText = buildAnnotatedString {
                 append(storyText)
@@ -143,15 +144,11 @@ private fun StoryScreenContent(
             }
             Text(
                 text = annotatedText,
-                style = MaterialTheme.typography.headlineSmall, // Yazıyı biraz küçülttük
+                style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center,
-                // 4. Metnin layout bilgisi hazır olduğunda yakalıyoruz
                 onTextLayout = { textLayoutResult = it }
             )
-
-            // Metin ve butonlar arasına boşluk koyarak ayrılmalarını sağlıyoruz
             Spacer(modifier = Modifier.height(100.dp))
-
             choices.forEach { choice ->
                 Button(
                     onClick = { onChoiceSelected(choice.nextNodeId) },
