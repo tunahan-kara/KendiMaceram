@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.kendimaceram.app.ui.components.MainScaffold
-import com.kendimaceram.app.ui.navigation.Screen
 import com.kendimaceram.app.viewmodel.NewStoriesViewModel
 import com.kendimaceram.app.viewmodel.StoryListItemState
 
@@ -39,9 +38,7 @@ fun NewStoriesScreen(
                     items(uiState.stories) { story ->
                         AllStoriesListItem(
                             story = story,
-                            isDownloading = uiState.downloadingStoryId == story.id,
-                            onDownloadClick = { viewModel.downloadStory(story.id) },
-                            onOpenClick = { navController.navigate(Screen.StoryReader.createRoute(story.id)) }
+                            onAddToLibraryClick = { viewModel.addStoryToLibrary(story.id) }
                         )
                     }
                 }
@@ -53,9 +50,7 @@ fun NewStoriesScreen(
 @Composable
 fun AllStoriesListItem(
     story: StoryListItemState,
-    isDownloading: Boolean,
-    onDownloadClick: () -> Unit,
-    onOpenClick: () -> Unit
+    onAddToLibraryClick: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -66,22 +61,15 @@ fun AllStoriesListItem(
             Text(text = story.title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.width(16.dp))
 
-            if (story.isDownloaded) {
-                Button(onClick = onOpenClick) {
-                    Text("Aç")
-                }
-            } else {
-                Button(onClick = onDownloadClick, enabled = !isDownloading) {
-                    if (isDownloading) {
-                        Box(modifier = Modifier.size(24.dp)) {
-                            CircularProgressIndicator(
-                                color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        }
-                    } else {
-                        Text("İndir")
-                    }
+            // Butonun mantığı ve yazısı değişti
+            Button(
+                onClick = onAddToLibraryClick,
+                enabled = !story.isInLibrary // Eğer kütüphanede ise butonu pasif yap
+            ) {
+                if (story.isInLibrary) {
+                    Text("Kütüphanede")
+                } else {
+                    Text("Kütüphaneye Ekle")
                 }
             }
         }

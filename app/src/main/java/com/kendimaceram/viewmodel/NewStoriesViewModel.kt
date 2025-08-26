@@ -2,7 +2,6 @@ package com.kendimaceram.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.kendimaceram.app.data.LocalStoryDataSource
 import com.kendimaceram.app.data.StoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,24 +11,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// EKSİK OLAN PARÇA 1: UI'ın listeleyeceği her bir elemanın durumunu tutan data class
 data class StoryListItemState(
     val id: String,
     val title: String,
-    val isDownloaded: Boolean
+    val isInLibrary: Boolean // İsim değişikliği
 )
 
-// EKSİK OLAN PARÇA 2: Ekranın genel durumunu tutan data class
 data class AllStoriesUiState(
     val stories: List<StoryListItemState> = emptyList(),
-    val isLoading: Boolean = false,
-    val downloadingStoryId: String? = null
+    val isLoading: Boolean = false
 )
 
 @HiltViewModel
 class NewStoriesViewModel @Inject constructor(
-    private val repository: StoryRepository,
-    private val localDataSource: LocalStoryDataSource
+    private val repository: StoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AllStoriesUiState())
@@ -43,33 +38,24 @@ class NewStoriesViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // 1. İnternetten tüm hikayelerin genel listesini çek
             val allAvailableStories = repository.getAllStoriesMetadataFromFirestore()
+            val libraryStoryIds = repository.getLibraryStoryIds().toSet()
 
-            // 2. Telefonun hafızasında GERÇEKTEN yüklü olan hikayelerin ID'lerini al
-            val locallyPresentStoryIds = localDataSource.getDownloadedStoryList().map { it.id }.toSet()
-
-            // 3. Bu iki bilgiyi karşılaştırarak son listeyi oluştur
             val combinedList = allAvailableStories.map { story ->
                 StoryListItemState(
                     id = story.id,
                     title = story.title,
-                    // "isDownloaded" durumu artık sadece telefonda dosya varsa true olacak.
-                    isDownloaded = story.id in locallyPresentStoryIds
+                    isInLibrary = story.id in libraryStoryIds
                 )
             }
-
             _uiState.update { it.copy(stories = combinedList, isLoading = false) }
         }
     }
 
-    fun downloadStory(storyId: String) {
+    fun addStoryToLibrary(storyId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(downloadingStoryId = storyId) }
-            repository.downloadAndSaveStory(storyId)
-            // İndirme sonrası listeyi yenileyerek butonun "Aç" olmasını sağla
-            loadAllStories()
-            _uiState.update { it.copy(downloadingStoryId = null) }
+            repository.addStoryToLibrary(storyId)
+            loadAllStories() // Listeyi yenileyerek butonun durumunu güncelle
         }
     }
 }

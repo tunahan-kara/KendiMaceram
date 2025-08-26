@@ -17,6 +17,6 @@ class KendiMaceramApp : Application() {
         Thread.sleep(4000)
 
 
-        ttsEngine.synthesize("Merhaba Tunahan, bugün umarım kendini iyi hissediyorsundur.")
+        ttsEngine.synthesize("Hello Tunahan, this is a trial version of the new application you wrote. This text is being read aloud in English to test the text-to-speech engine, and I am narrating a long passage so that you can understand how efficiently it works.   merhaba tunahan, bu senin yazdığın yeni uygulamanın bir deneme sürümüdür. metinden sese motorunu denemek için yazdığın bu metin ingilizce olarak seslendiriliyor, ne kadar verimli çalıştığını anlaman için uzun bir metin seslendiriyorum.")
     }
 }

@@ -10,12 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.kendimaceram.app.data.StoryMetadata
 import com.kendimaceram.app.ui.components.MainScaffold
 import com.kendimaceram.app.ui.navigation.Screen
+import com.kendimaceram.app.viewmodel.LibraryItemState
 import com.kendimaceram.app.viewmodel.MyStoriesViewModel
 
 @Composable
@@ -23,38 +24,40 @@ fun MyStoriesScreen(
     navController: NavController,
     viewModel: MyStoriesViewModel = hiltViewModel()
 ) {
-    // --- State Yönetimi ---
     LaunchedEffect(key1 = Unit) {
-        viewModel.loadDownloadedStories()
+        viewModel.loadLibrary()
     }
-    val stories by viewModel.stories.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
 
-    // Onay penceresinin (dialog) durumunu yönetmek için iki yeni hafıza değişkeni
     var showDialog by remember { mutableStateOf(false) }
-    var storyToDelete by remember { mutableStateOf<StoryMetadata?>(null) }
-
+    var storyToDelete by remember { mutableStateOf<LibraryItemState?>(null) }
 
     MainScaffold(navController = navController) { innerPadding ->
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (stories.isEmpty()) {
+            if (uiState.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Henüz hiç hikaye indirmemişsin.")
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.stories.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Kütüphanenizde hiç hikaye yok.")
                 }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(stories) { story ->
-                        // HATA VEREN YERİ ŞİMDİ DÜZELTİYORUZ
-                        StoryListItem(
+                    items(uiState.stories, key = { it.metadata.id }) { story ->
+                        LibraryListItem(
                             story = story,
-                            onClick = {
-                                navController.navigate(Screen.StoryReader.createRoute(story.id))
+                            onOpenClick = {
+                                navController.navigate(Screen.StoryReader.createRoute(story.metadata.id))
                             },
-                            // Silme ikonuna basıldığında ne yapılacağını söylüyoruz
+                            onDownloadClick = {
+                                viewModel.downloadStory(story.metadata.id)
+                            },
                             onDeleteClick = {
-                                storyToDelete = story // Hangi hikayeyi sileceğimizi hafızaya al
-                                showDialog = true   // ve onay penceresini göster
+                                storyToDelete = story
+                                showDialog = true
                             }
                         )
                     }
@@ -63,17 +66,15 @@ fun MyStoriesScreen(
         }
     }
 
-    // --- Onay Penceresi (AlertDialog) ---
-    // Sadece showDialog true olduğunda ekranda görünür.
     if (showDialog && storyToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Hikayeyi Sil") },
-            text = { Text("'${storyToDelete?.title}' adlı hikayeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.") },
+            title = { Text("Hikayeyi Cihazdan Sil") },
+            text = { Text("'${storyToDelete?.metadata?.title}' adlı hikayeyi cihazınızdan silmek istediğinizden emin misiniz? Bu işlem hikayeyi kütüphanenizden kaldırmaz.") },
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.deleteStory(storyToDelete!!.id)
+                        viewModel.deleteStoryFromDevice(storyToDelete!!.metadata.id)
                         showDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
@@ -91,26 +92,48 @@ fun MyStoriesScreen(
 }
 
 @Composable
-fun StoryListItem(
-    story: StoryMetadata,
-    onClick: () -> Unit,
-    onDeleteClick: () -> Unit // <-- YENİ BİR PARAMETRE EKLEDİK
+fun LibraryListItem(
+    story: LibraryItemState,
+    onOpenClick: () -> Unit,
+    onDownloadClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
+    Card(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Başlık, satırda kalan tüm boşluğu kaplayacak
-            Text(text = story.title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = story.metadata.title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    text = if (story.isDownloaded) "Cihaza İndirildi" else "Bulutta",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
 
-            // Çöp Kutusu ikonu
-            IconButton(onClick = onDeleteClick) {
-                Icon(imageVector = Icons.Default.Delete, contentDescription = "Hikayeyi Sil")
+            if (story.isDownloaded) {
+                // Eğer indirilmişse, "Aç" butonu ve "Sil" ikonu göster
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Button(onClick = onOpenClick) {
+                        Text("Aç")
+                    }
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Cihazdan Sil")
+                    }
+                }
+            } else {
+                // İndirilmemişse, "İndir" butonu göster
+                Button(onClick = onDownloadClick, enabled = !story.isDownloading) {
+                    if (story.isDownloading) {
+                        Box(modifier = Modifier.size(24.dp)) {
+                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                        }
+                    } else {
+                        Text("İndir")
+                    }
+                }
             }
         }
     }

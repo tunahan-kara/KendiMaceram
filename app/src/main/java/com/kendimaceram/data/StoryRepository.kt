@@ -17,8 +17,8 @@ class StoryRepository @Inject constructor(
     private val db = Firebase.firestore
     private val auth = Firebase.auth
 
-    // Giriş yapmış kullanıcının indirdiği (yani hakkı olan) hikayelerin ID listesini Firestore'dan çeker.
-    suspend fun getDownloadedStoryIdsFromFirestore(): List<String> {
+    // Sadece kullanıcının sahip olduğu (kütüphanesine eklediği) hikayelerin ID'lerini döner.
+    suspend fun getLibraryStoryIds(): List<String> {
         val userId = auth.currentUser?.uid ?: return emptyList()
         return try {
             val document = db.collection("users").document(userId).get().await()
@@ -28,50 +28,39 @@ class StoryRepository @Inject constructor(
         }
     }
 
-    // Bir hikaye indirildiğinde, ID'sini o kullanıcının Firestore'daki listesine ekler.
-    private suspend fun addDownloadedStoryIdToFirestore(storyId: String) {
+    // Bir hikayeyi sadece kullanıcının kütüphanesine (Firebase'e) ekler.
+    suspend fun addStoryToLibrary(storyId: String) {
         val userId = auth.currentUser?.uid ?: return
         val userDocRef = db.collection("users").document(userId)
         try {
-            // FieldValue.arrayUnion, eğer listede zaten varsa tekrar eklemez, bu sayede liste temiz kalır.
+            // FieldValue.arrayUnion, eğer listede zaten varsa tekrar eklemez.
             userDocRef.update("downloadedStories", FieldValue.arrayUnion(storyId)).await()
         } catch (e: Exception) {
-            // Eğer kullanıcı dökümanı daha önce hiç oluşturulmamışsa (ilk indirmesiyse),
-            // dökümanı oluştur ve ilk elemanı ekle.
+            // Döküman henüz yoksa, oluştur ve ilk elemanı ekle.
             db.collection("users").document(userId).set(mapOf("downloadedStories" to listOf(storyId))).await()
         }
     }
 
-    // Bu fonksiyonu şimdilik kullanmıyoruz ama ileride gerekebilir diye bırakabiliriz.
-    private suspend fun removeDownloadedStoryIdFromFirestore(storyId: String) {
-        val userId = auth.currentUser?.uid ?: return
-        try {
-            val userDocRef = db.collection("users").document(userId)
-            userDocRef.update("downloadedStories", FieldValue.arrayRemove(storyId)).await()
-        } catch (e: Exception) {
-            Log.e("Firestore", "Hikaye ID'si silinirken hata", e)
-        }
-    }
-
-    // Bu fonksiyon artık hem internetten indirir, hem lokale kaydeder, hem de kullanıcının hakkını Firestore'a işler.
-    suspend fun downloadAndSaveStory(storyDocId: String) {
-        try {
+    // Sahip olunan bir hikayeyi internetten indirip telefon hafızasına kaydeder.
+    suspend fun downloadStoryToLocal(storyDocId: String): Boolean {
+        return try {
             val document = db.collection("stories").document(storyDocId).get().await()
             document.data?.let { data ->
                 localDataSource.saveStory(storyDocId, data)
-                addDownloadedStoryIdToFirestore(storyDocId)
             }
+            true
         } catch (e: Exception) {
             e.printStackTrace()
+            false
         }
     }
 
-    // Bu fonksiyon artık SADECE telefon hafızasından hikayeyi siler, kullanıcının hakkını silmez.
-    suspend fun deleteStory(storyId: String) {
+    // Bir hikayeyi SADECE telefon hafızasından siler.
+    suspend fun deleteStoryFromDevice(storyId: String) {
         localDataSource.deleteStory(storyId)
     }
 
-    // Bu fonksiyon Firestore'daki tüm hikayelerin genel listesini çeker.
+    // Firestore'daki tüm hikayelerin genel listesini çeker.
     suspend fun getAllStoriesMetadataFromFirestore(): List<StoryMetadata> {
         return try {
             val documents = db.collection("stories").get().await()
@@ -87,7 +76,7 @@ class StoryRepository @Inject constructor(
         }
     }
 
-    // Bu fonksiyon, telefon hafızasındaki tek bir hikayenin içeriğini okur.
+    // Telefon hafızasındaki tek bir hikayenin içeriğini okur.
     suspend fun getLocalStoryNodes(storyId: String): Map<String, StoryNode> {
         val storyData = localDataSource.getStory(storyId) ?: return emptyMap()
         val storyNodesMap = mutableMapOf<String, StoryNode>()
