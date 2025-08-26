@@ -30,7 +30,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    // Ayarları okumak için SettingsRepository'yi enjekte ediyoruz.
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
@@ -39,10 +38,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
-            // Kullanıcının tema seçimini DataStore'dan anlık olarak dinliyoruz.
             val themeSetting by settingsRepository.themeSettingFlow.collectAsState(initial = ThemeSetting.SYSTEM)
-
-            // Hangi temanın kullanılacağına karar veriyoruz.
             val useDarkTheme = when (themeSetting) {
                 ThemeSetting.SYSTEM -> isSystemInDarkTheme()
                 ThemeSetting.LIGHT -> false
@@ -51,7 +47,7 @@ class MainActivity : ComponentActivity() {
 
             KendiMaceramTheme(darkTheme = useDarkTheme) {
                 Surface(
-                    modifier = Modifier.fillMaxSize(), // Edge-to-edge için padding'i Theme'e taşıdık
+                    modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
@@ -141,6 +137,17 @@ class MainActivity : ComponentActivity() {
                             popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
                         ) {
                             HelpScreen(navController = navController)
+                        }
+                        // YENİ EKRANIMIZI NAVHOST'A EKLİYORUZ
+                        composable(
+                            route = Screen.StoryDetail.route,
+                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
+                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
+                        ) { backStackEntry ->
+                            val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
+                            StoryDetailScreen(navController = navController, storyId = storyId)
                         }
                         composable(
                             route = Screen.StoryReader.route,

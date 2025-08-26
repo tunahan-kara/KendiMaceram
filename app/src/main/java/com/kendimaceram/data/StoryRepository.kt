@@ -10,12 +10,40 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
+// Hikayenin detaylarını (özet, resim vb.) tutacak yeni data class'ımız
+data class StoryDetails(
+    val id: String = "",
+    val title: String = "",
+    val summary: String = "",
+    val imageUrl: String? = null
+)
+
 @Singleton
 class StoryRepository @Inject constructor(
     private val localDataSource: LocalStoryDataSource
 ) {
     private val db = Firebase.firestore
     private val auth = Firebase.auth
+
+    // YENİ FONKSİYON: Firestore'dan tek bir hikayenin detaylarını çeker.
+    suspend fun getStoryDetailsFromFirestore(storyId: String): StoryDetails? {
+        return try {
+            val doc = db.collection("stories").document(storyId).get().await()
+            if (doc.exists()) {
+                StoryDetails(
+                    id = doc.id,
+                    title = doc.getString("title") ?: "Başlık Yok",
+                    summary = doc.getString("summary") ?: "Özet mevcut değil.",
+                    imageUrl = doc.getString("imageUrl") // Eğer resim yoksa null olacak
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 
     // Sadece kullanıcının sahip olduğu (kütüphanesine eklediği) hikayelerin ID'lerini döner.
     suspend fun getLibraryStoryIds(): List<String> {
@@ -33,10 +61,8 @@ class StoryRepository @Inject constructor(
         val userId = auth.currentUser?.uid ?: return
         val userDocRef = db.collection("users").document(userId)
         try {
-            // FieldValue.arrayUnion, eğer listede zaten varsa tekrar eklemez.
             userDocRef.update("downloadedStories", FieldValue.arrayUnion(storyId)).await()
         } catch (e: Exception) {
-            // Döküman henüz yoksa, oluştur ve ilk elemanı ekle.
             db.collection("users").document(userId).set(mapOf("downloadedStories" to listOf(storyId))).await()
         }
     }
@@ -67,7 +93,8 @@ class StoryRepository @Inject constructor(
             documents.map { doc ->
                 StoryMetadata(
                     id = doc.id,
-                    title = doc.getString("title") ?: "Başlıksız Hikaye"
+                    title = doc.getString("title") ?: "Başlıksız Hikaye",
+                    imageUrl = doc.getString("imageUrl")
                 )
             }
         } catch (e: Exception) {

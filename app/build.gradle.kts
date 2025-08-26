@@ -55,6 +55,7 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended-android:1.6.8")
     implementation(libs.firebase.auth)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation(libs.coil.compose)
 
 
     implementation(libs.androidx.core.ktx)

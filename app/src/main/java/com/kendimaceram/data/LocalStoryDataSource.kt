@@ -11,7 +11,8 @@ import javax.inject.Singleton
 
 data class StoryMetadata(
     val id: String,
-    val title: String
+    val title: String,
+    val imageUrl: String? = null
 )
 
 @Singleton

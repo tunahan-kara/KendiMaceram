@@ -13,7 +13,7 @@ firebaseFirestore = "26.0.0"
 
 hilt = "2.48"
 firebaseAuth = "23.0.0"
-
+coil = "2.6.0"
 
 
 [libraries]
@@ -34,6 +34,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore", version.ref = "firebaseFirestore" }
 
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuth" }
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 
 [plugins]

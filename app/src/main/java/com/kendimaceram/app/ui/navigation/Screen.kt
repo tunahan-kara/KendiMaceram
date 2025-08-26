@@ -24,6 +24,10 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
     data object ThemeSettings : Screen("theme_settings_screen", "Tema Ayarları", Icons.Default.Palette) // <-- EKLENDİ
     data object Help : Screen("help_screen", "Yardım & Destek", Icons.Default.HelpOutline) // <-- EKLENDİ
 
+    data object StoryDetail : Screen("story_detail_screen/{storyId}", "Hikaye Detayı", null) {
+        fun createRoute(storyId: String) = "story_detail_screen/$storyId"
+    }
+
     data object AccountInfo : Screen("account_info_screen", "Hesap Bilgileri", Icons.Default.Person)
     data object StoryReader : Screen("story_reader_screen/{storyId}", "Hikaye Okuyucu", null) {
         fun createRoute(storyId: String) = "story_reader_screen/$storyId"

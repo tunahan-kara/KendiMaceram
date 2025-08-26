@@ -2,18 +2,22 @@ package com.kendimaceram.app.ui.screens
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.kendimaceram.app.ui.components.MainScaffold
 import com.kendimaceram.app.ui.navigation.Screen
 import com.kendimaceram.app.viewmodel.LibraryItemState
@@ -29,11 +33,8 @@ fun MyStoriesScreen(
     }
     val uiState by viewModel.uiState.collectAsState()
 
-    var showDialog by remember { mutableStateOf(false) }
-    var storyToDelete by remember { mutableStateOf<LibraryItemState?>(null) }
-
     MainScaffold(navController = navController) { innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 8.dp)) {
             Spacer(modifier = Modifier.height(16.dp))
 
             if (uiState.isLoading) {
@@ -45,19 +46,18 @@ fun MyStoriesScreen(
                     Text("Kütüphanenizde hiç hikaye yok.")
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Dikey liste yerine, 2 sütunlu bir ızgara kullanıyoruz
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(uiState.stories, key = { it.metadata.id }) { story ->
-                        LibraryListItem(
+                        StoryCardItem(
                             story = story,
-                            onOpenClick = {
-                                navController.navigate(Screen.StoryReader.createRoute(story.metadata.id))
-                            },
-                            onDownloadClick = {
-                                viewModel.downloadStory(story.metadata.id)
-                            },
-                            onDeleteClick = {
-                                storyToDelete = story
-                                showDialog = true
+                            // Tıklandığında artık direkt okuyucuya değil, detay ekranına gidiyor
+                            onClick = {
+                                navController.navigate(Screen.StoryDetail.createRoute(story.metadata.id))
                             }
                         )
                     }
@@ -65,76 +65,43 @@ fun MyStoriesScreen(
             }
         }
     }
-
-    if (showDialog && storyToDelete != null) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text("Hikayeyi Cihazdan Sil") },
-            text = { Text("'${storyToDelete?.metadata?.title}' adlı hikayeyi cihazınızdan silmek istediğinizden emin misiniz? Bu işlem hikayeyi kütüphanenizden kaldırmaz.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteStoryFromDevice(storyToDelete!!.metadata.id)
-                        showDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Sil")
-                }
-            },
-            dismissButton = {
-                Button(onClick = { showDialog = false }) {
-                    Text("İptal")
-                }
-            }
-        )
-    }
 }
 
+// Her bir hikaye afişini temsil eden yeni bileşenimiz
 @Composable
-fun LibraryListItem(
+fun StoryCardItem(
     story: LibraryItemState,
-    onOpenClick: () -> Unit,
-    onDownloadClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onClick: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = story.metadata.title, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = if (story.isDownloaded) "Cihaza İndirildi" else "Bulutta",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-
-            if (story.isDownloaded) {
-                // Eğer indirilmişse, "Aç" butonu ve "Sil" ikonu göster
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = onOpenClick) {
-                        Text("Aç")
-                    }
-                    IconButton(onClick = onDeleteClick) {
-                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Cihazdan Sil")
-                    }
-                }
-            } else {
-                // İndirilmemişse, "İndir" butonu göster
-                Button(onClick = onDownloadClick, enabled = !story.isDownloading) {
-                    if (story.isDownloading) {
-                        Box(modifier = Modifier.size(24.dp)) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-                        }
-                    } else {
-                        Text("İndir")
-                    }
-                }
-            }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column {
+            // Hikaye kapak resmi
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    // Şimdilik her hikayeye farklı bir rastgele resim atıyoruz
+                    .data(story.metadata.imageUrl ?: "https://picsum.photos/seed/${story.metadata.id}/400/500")
+                    .crossfade(true)
+                    .build(),
+                contentDescription = story.metadata.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(3f / 4f), // Afiş oranını koru (3:4)
+                contentScale = ContentScale.Crop
+            )
+            // Hikaye adı
+            Text(
+                text = story.metadata.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(12.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
