@@ -11,13 +11,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// Data class'ımıza imageUrl alanını ekliyoruz
 data class StoryListItemState(
     val id: String,
     val title: String,
-    val isInLibrary: Boolean // İsim değişikliği
+    val imageUrl: String?, // <-- YENİ EKLENEN SATIR
+    val isInLibrary: Boolean
 )
 
-data class AllStoriesUiState(
+data class NewStoriesUiState(
     val stories: List<StoryListItemState> = emptyList(),
     val isLoading: Boolean = false
 )
@@ -27,35 +29,44 @@ class NewStoriesViewModel @Inject constructor(
     private val repository: StoryRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AllStoriesUiState())
-    val uiState: StateFlow<AllStoriesUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(NewStoriesUiState())
+    val uiState: StateFlow<NewStoriesUiState> = _uiState.asStateFlow()
 
     init {
         loadAllStories()
     }
 
-    fun loadAllStories() {
+    private fun loadAllStories() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-
-            val allAvailableStories = repository.getAllStoriesMetadataFromFirestore()
+            val allStories = repository.getAllStoriesMetadataFromFirestore()
             val libraryStoryIds = repository.getLibraryStoryIds().toSet()
 
-            val combinedList = allAvailableStories.map { story ->
+            val storyList = allStories.map { metadata ->
                 StoryListItemState(
-                    id = story.id,
-                    title = story.title,
-                    isInLibrary = story.id in libraryStoryIds
+                    id = metadata.id,
+                    title = metadata.title,
+                    imageUrl = metadata.imageUrl, // <-- YENİ EKLENEN SATIR
+                    isInLibrary = metadata.id in libraryStoryIds
                 )
             }
-            _uiState.update { it.copy(stories = combinedList, isLoading = false) }
+            _uiState.update { it.copy(stories = storyList, isLoading = false) }
         }
     }
 
-    fun addStoryToLibrary(storyId: String) {
+    fun addStoryToUserLibrary(storyId: String) {
         viewModelScope.launch {
             repository.addStoryToLibrary(storyId)
-            loadAllStories() // Listeyi yenileyerek butonun durumunu güncelle
+            _uiState.update { currentState ->
+                val updatedStories = currentState.stories.map { story ->
+                    if (story.id == storyId) {
+                        story.copy(isInLibrary = true)
+                    } else {
+                        story
+                    }
+                }
+                currentState.copy(stories = updatedStories)
+            }
         }
     }
 }

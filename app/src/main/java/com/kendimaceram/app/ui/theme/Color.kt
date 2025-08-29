@@ -2,10 +2,13 @@ package com.kendimaceram.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Game Pass Dark Theme Renkleri (GÜNCELLENDİ)
+val GPDarkCharcoal = Color(0xFF0D0D0F) // Daha Siyah bir arka plan
+val GPGreen = Color(0xFF9EF00F)
+val GPGray = Color(0xFF8D9093)
+val GPLightGray = Color(0xFFD0D1D2)
+val GPCardSurface = Color(0xFF1A1C20) // Kartları biraz daha belirgin yaptık
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Yeni Gradient Renkleri
+val GPDarkPurple = Color(0xFF2E1A47)
+val GPDarkGreen = Color(0xFF1C3A3A)

@@ -72,7 +72,6 @@ fun PremiumScreen(navController: NavController) {
                 PremiumFeature(text = "Reklamsız Deneyim")
                 PremiumFeature(text = "Tüm Hikayelere Sınırsız Erişim")
                 PremiumFeature(text = "Çevrimdışı Okuma")
-                PremiumFeature(text = "Yeni Hikayelere Erken Erişim")
             }
             Spacer(modifier = Modifier.weight(1f))
             Button(

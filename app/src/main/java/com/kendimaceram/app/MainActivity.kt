@@ -8,17 +8,23 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.kendimaceram.app.data.SettingsRepository
 import com.kendimaceram.app.data.ThemeSetting
 import com.kendimaceram.app.ui.navigation.Screen
@@ -26,6 +32,10 @@ import com.kendimaceram.app.ui.screens.*
 import com.kendimaceram.app.ui.theme.KendiMaceramTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import com.kendimaceram.app.ui.screens.LoginScreen
+import com.kendimaceram.app.ui.screens.SplashScreen
+import com.kendimaceram.app.ui.theme.GPDarkGreen
+import com.kendimaceram.app.ui.theme.GPDarkPurple
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -46,122 +56,119 @@ class MainActivity : ComponentActivity() {
             }
 
             KendiMaceramTheme(darkTheme = useDarkTheme) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    GPDarkPurple,
+                                    GPDarkGreen,
+                                    MaterialTheme.colorScheme.background
+                                )
+                            )
+                        )
                 ) {
-                    val navController = rememberNavController()
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.Splash.route
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        // Surface'i şeffaf yapıyoruz ki arkasındaki gradient görünsün
+                        color = Color.Transparent
                     ) {
-                        composable(route = Screen.Splash.route) {
-                            SplashScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.Login.route,
-                            enterTransition = { fadeIn(animationSpec = tween(700)) },
-                            exitTransition = { fadeOut(animationSpec = tween(700)) }
+                        val navController = rememberNavController()
+                        NavHost(
+                            navController = navController,
+                            startDestination = Screen.Splash.route
                         ) {
-                            LoginScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.Register.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) {
-                            RegisterScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.MyStories.route,
-                            enterTransition = { fadeIn(animationSpec = tween(300)) },
-                            exitTransition = { fadeOut(animationSpec = tween(300)) }
-                        ) {
-                            MyStoriesScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.NewStories.route,
-                            enterTransition = { fadeIn(animationSpec = tween(300)) },
-                            exitTransition = { fadeOut(animationSpec = tween(300)) }
-                        ) {
-                            NewStoriesScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.Premium.route,
-                            enterTransition = { fadeIn(animationSpec = tween(300)) },
-                            exitTransition = { fadeOut(animationSpec = tween(300)) }
-                        ) {
-                            PremiumScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.Profile.route,
-                            enterTransition = { fadeIn(animationSpec = tween(300)) },
-                            exitTransition = { fadeOut(animationSpec = tween(300)) }
-                        ) {
-                            ProfileScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.AccountInfo.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) {
-                            AccountInfoScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.NotificationSettings.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) {
-                            NotificationSettingsScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.ThemeSettings.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) {
-                            ThemeSettingsScreen(navController = navController)
-                        }
-                        composable(
-                            route = Screen.Help.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) {
-                            HelpScreen(navController = navController)
-                        }
-                        // YENİ EKRANIMIZI NAVHOST'A EKLİYORUZ
-                        composable(
-                            route = Screen.StoryDetail.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) { backStackEntry ->
-                            val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
-                            StoryDetailScreen(navController = navController, storyId = storyId)
-                        }
-                        composable(
-                            route = Screen.StoryReader.route,
-                            enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }, animationSpec = tween(300)) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }, animationSpec = tween(300)) },
-                            popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }, animationSpec = tween(300)) }
-                        ) { backStackEntry ->
-                            val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
-                            StoryReaderScreen(navController = navController, storyId = storyId)
+                            composable(route = Screen.Splash.route) {
+                                SplashScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.Login.route,
+                                enterTransition = { fadeIn(animationSpec = tween(700)) },
+                                exitTransition = { fadeOut(animationSpec = tween(700)) }
+                            ) {
+                                LoginScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.Register.route,
+                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) },
+                                exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }) }
+                            ) {
+                                RegisterScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.MyStories.route,
+                                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                            ) {
+                                MyStoriesScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.NewStories.route,
+                                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                            ) {
+                                NewStoriesScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.Premium.route,
+                                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                            ) {
+                                PremiumScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.Profile.route,
+                                enterTransition = { fadeIn(animationSpec = tween(300)) },
+                                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                            ) {
+                                ProfileScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.AccountInfo.route,
+                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
+                            ) {
+                                AccountInfoScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.NotificationSettings.route,
+                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
+                            ) {
+                                NotificationSettingsScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.ThemeSettings.route,
+                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
+                            ) {
+                                ThemeSettingsScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.Help.route,
+                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
+                            ) {
+                                HelpScreen(navController = navController)
+                            }
+                            composable(
+                                route = Screen.StoryDetail.route,
+                                arguments = listOf(navArgument("storyId") {
+                                    type = NavType.StringType
+                                })
+                            ) { backStackEntry ->
+                                val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
+                                StoryDetailScreen(navController = navController, storyId = storyId)
+                            }
+                            composable(
+                                route = Screen.StoryReader.route,
+                                arguments = listOf(navArgument("storyId") {
+                                    type = NavType.StringType
+                                })
+                            ) { backStackEntry ->
+                                val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
+                                StoryReaderScreen(navController = navController, storyId = storyId)
+                            }
                         }
                     }
                 }
             }
         }
-    }
-}
+    }}

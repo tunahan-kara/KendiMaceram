@@ -16,26 +16,44 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+// Yeni DarkColorScheme'imiz
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = GPGreen,
+    onPrimary = GPDarkCharcoal,
+    secondary = GPGray,
+    background = GPDarkCharcoal,
+    surface = GPCardSurface,
+    onBackground = Color.White,
+    onSurface = GPLightGray
 )
 
+// Şimdilik LightColorScheme'i de benzer, aydınlık tonlarla güncelleyelim
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = GPGreen,
+    onPrimary = Color.White,
+    secondary = GPGray,
+    background = Color.White,
+    surface = Color(0xFFF0F2F5),
+    onBackground = GPDarkCharcoal,
+    onSurface = GPDarkCharcoal
 )
 
-// ui/theme/Theme.kt
 @Composable
 fun KendiMaceramTheme(
-    // darkTheme parametresini dışarıdan alacak şekilde basitleştiriyoruz
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    // Şimdilik dinamik renkleri kapatalım ki bizim renklerimiz öne çıksın
+    val dynamicColor = false
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
