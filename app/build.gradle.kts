@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation(libs.coil.compose)
+    implementation(libs.material)
 
 
     implementation(libs.androidx.core.ktx)
