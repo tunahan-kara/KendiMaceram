@@ -1,11 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
-
     alias(libs.plugins.google.dagger.hilt.android)
-    id("org.jetbrains.kotlin.kapt")
+    alias(libs.plugins.google.devtools.ksp)
+
+    // Crashlytics plugin
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -20,6 +21,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -32,42 +36,72 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.7"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
 dependencies {
 
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1") // Versiyon numarasını en güncel olanla değiştirebilirsin
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("androidx.compose.material:material-icons-extended-android:1.6.8")
-    implementation(libs.firebase.auth)
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
-    implementation(libs.coil.compose)
-    implementation(libs.material)
-
-
+    // Core & Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1")
+
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.compose.material:material-icons-extended-android:1.6.8")
+
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Hilt (with KSP)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // --- FIREBASE ---
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+
+    // Analytics & Crashlytics
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
+    // Eğer NDK crash raporlama istiyorsan şu da eklenebilir:
+    // implementation("com.google.firebase:firebase-crashlytics-ndk")
+    // --- FIREBASE BİTTİ ---
+
+    // Data
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.androidx.datastore.preferences)
+
+    // Image Loading
+    implementation(libs.coil.compose)
+
+    // Material Components (for themes.xml)
+    implementation(libs.material)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -53,6 +53,7 @@ class MainActivity : ComponentActivity() {
                 ThemeSetting.SYSTEM -> isSystemInDarkTheme()
                 ThemeSetting.LIGHT -> false
                 ThemeSetting.DARK -> true
+
             }
 
             KendiMaceramTheme(darkTheme = useDarkTheme) {

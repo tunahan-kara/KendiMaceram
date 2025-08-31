@@ -67,7 +67,6 @@ fun ProfileScreen(
                 text = "Uygulamayı Değerlendir",
                 onClick = { Toast.makeText(context, "Uygulamayı Değerlendir tıklandı", Toast.LENGTH_SHORT).show() }
             )
-
             Spacer(modifier = Modifier.weight(1f))
 
             ProfileMenuItem(
