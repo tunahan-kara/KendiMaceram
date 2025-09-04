@@ -1,6 +1,7 @@
 package com.kendimaceram.app.ui.components
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -42,7 +43,8 @@ fun MainScaffold(
 
     Scaffold(
         containerColor = Color.Transparent,
-        topBar = {
+        contentWindowInsets = WindowInsets(0),
+                topBar = {
             if (screenTitle.isNotEmpty()) {
                 CenterAlignedTopAppBar(
                     title = { Text(text = screenTitle, fontWeight = FontWeight.Bold) },

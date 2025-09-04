@@ -87,9 +87,7 @@ dependencies {
     // Analytics & Crashlytics
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-crashlytics")
-    // Eğer NDK crash raporlama istiyorsan şu da eklenebilir:
-    // implementation("com.google.firebase:firebase-crashlytics-ndk")
-    // --- FIREBASE BİTTİ ---
+
 
     // Data
     implementation("com.google.code.gson:gson:2.10.1")

@@ -6,6 +6,10 @@ import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,84 +27,168 @@ import com.kendimaceram.app.data.Choice
 import com.kendimaceram.app.ui.components.MainScaffold
 import com.kendimaceram.app.viewmodel.StoryViewModel
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoryReaderScreen(
     navController: NavController,
     storyId: String,
+    storyTitle: String? = null,
     viewModel: StoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // TTS motorunu Composable içinde güvenli bir şekilde tutmak için
     val tts = remember { mutableStateOf<TextToSpeech?>(null) }
+    var isPlaying by remember { mutableStateOf(false) }
+    var resumeOffset by remember { mutableStateOf(0) }
 
-    // Ekran açıldığında hikayeyi yükle
-    LaunchedEffect(key1 = Unit) {
-        viewModel.loadStory(storyId)
-    }
+    LaunchedEffect(Unit) { viewModel.loadStory(storyId) }
 
-    // Bu Composable ekrandan ayrılırken (örn: geri tuşuna basınca)
-    // TTS motorunu güvenle kapatır ve hafıza sızıntısını önler.
-    DisposableEffect(key1 = Unit) {
+    DisposableEffect(Unit) {
         onDispose {
             tts.value?.stop()
             tts.value?.shutdown()
-            Log.d("TTS", "StoryReaderScreen'den çıkıldı, TTS motoru kapatıldı.")
+            Log.d("TTS", "TTS kapatıldı.")
         }
     }
 
-    // Hikaye metni her değiştiğinde bu blok tetiklenir ve yeni metni okur.
-    LaunchedEffect(key1 = uiState.currentNode) {
-        uiState.currentNode?.text?.let { newText ->
-            tts.value?.stop() // Önceki konuşmayı durdur (varsa)
+    fun speakFromOffset(fullText: String, startOffset: Int) {
+        val engine = tts.value ?: return
+        val safeOffset = startOffset.coerceIn(0, fullText.length)
+        val remaining = fullText.substring(safeOffset)
+        if (remaining.isBlank()) return
 
-            // Yeni bir TTS motoru oluştur
-            tts.value = TextToSpeech(context) { status ->
-                if (status == TextToSpeech.SUCCESS) {
-                    tts.value?.language = Locale("tr", "TR")
-                    // Kelime vurgulama için listener'ımızı ayarlıyoruz
-                    tts.value?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                        override fun onStart(utteranceId: String?) { viewModel.clearHighlight() }
-                        override fun onDone(utteranceId: String?) { viewModel.clearHighlight() }
-                        override fun onError(utteranceId: String?) {}
-                        override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
-                            viewModel.updateHighlightRange(IntRange(start, end))
-                        }
-                    })
-                    // Konuşmayı başlat
-                    val utteranceId = UUID.randomUUID().toString()
-                    tts.value?.speak(newText, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
-                } else {
-                    Log.e("TTS", "Standart TTS motoru başlatılamadı!")
-                }
+        val utteranceId = UUID.randomUUID().toString()
+        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) { viewModel.clearHighlight() }
+            override fun onDone(utteranceId: String?) {
+                viewModel.clearHighlight()
+                isPlaying = false
+                resumeOffset = 0
             }
+            override fun onError(utteranceId: String?) {}
+            override fun onRangeStart(utteranceId: String?, start: Int, end: Int, frame: Int) {
+                val globalStart = safeOffset + start
+                val globalEnd = (safeOffset + end).coerceAtMost(fullText.length)
+                viewModel.updateHighlightRange(IntRange(globalStart, globalEnd))
+                resumeOffset = globalStart
+            }
+        })
+        engine.speak(remaining, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+    }
+
+    LaunchedEffect(uiState.currentNode) {
+        val text = uiState.currentNode?.text ?: return@LaunchedEffect
+        tts.value?.stop()
+        tts.value = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts.value?.language = Locale("tr", "TR")
+                resumeOffset = 0
+                isPlaying = true
+                speakFromOffset(text, resumeOffset)
+            } else Log.e("TTS", "TTS başlatılamadı!")
         }
     }
+
+    val titleText = storyTitle ?: "Hikaye"
 
     MainScaffold(navController = navController) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                StoryScreenContent(
-                    storyText = uiState.currentNode?.text ?: "Hikaye yüklenemedi.",
-                    choices = uiState.currentNode?.choices ?: emptyList(),
-                    highlightRange = uiState.highlightRange,
-                    onChoiceSelected = { choiceId ->
-                        viewModel.makeChoice(choiceId)
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            // APP BAR: tema ile tam uyum
+            CenterAlignedTopAppBar(
+                modifier = Modifier.statusBarsPadding(),
+                title = { Text(titleText, maxLines = 1, color = MaterialTheme.colorScheme.onBackground) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        tts.value?.stop()
+                        navController.popBackStack()
+                    }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Geri",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
                     }
-                )
+                },
+                actions = {
+                    val storyText = uiState.currentNode?.text.orEmpty()
+                    IconButton(onClick = {
+                        if (storyText.isBlank()) return@IconButton
+                        val engine = tts.value
+                        if (isPlaying) {
+                            engine?.stop()
+                            isPlaying = false
+                        } else {
+                            if (engine == null) {
+                                tts.value = TextToSpeech(context) { status ->
+                                    if (status == TextToSpeech.SUCCESS) {
+                                        tts.value?.language = Locale("tr", "TR")
+                                        isPlaying = true
+                                        speakFromOffset(storyText, resumeOffset)
+                                    } else Log.e("TTS", "TTS tekrar başlatılamadı!")
+                                }
+                            } else {
+                                isPlaying = true
+                                speakFromOffset(storyText, resumeOffset)
+                            }
+                        }
+                    }) {
+                        if (isPlaying) {
+                            Icon(
+                                Icons.Default.Pause,
+                                contentDescription = "Duraklat",
+                                tint = MaterialTheme.colorScheme.primary // GPGreen
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.PlayArrow,
+                                contentDescription = "Oynat",
+                                tint = MaterialTheme.colorScheme.primary // GPGreen
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = Color.Transparent,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                    actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                ),
+                windowInsets = WindowInsets(0)
+            )
+
+            // İçerik
+            Box(modifier = Modifier.weight(1f)) {
+                if (uiState.isLoading) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    StoryScreenContent(
+                        storyText = uiState.currentNode?.text ?: "Hikaye yüklenemedi.",
+                        choices = uiState.currentNode?.choices ?: emptyList(),
+                        highlightRange = uiState.highlightRange,
+                        onChoiceSelected = { choiceId ->
+                            isPlaying = false
+                            resumeOffset = 0
+                            tts.value?.stop()
+                            viewModel.makeChoice(choiceId)
+                        }
+                    )
+                }
             }
         }
     }
 }
 
-// Bu yardımcı Composable, UI'ı çizmekten sorumlu.
 @Composable
 private fun StoryScreenContent(
     storyText: String,
@@ -116,9 +204,7 @@ private fun StoryScreenContent(
         if (highlightRange != null && textLayoutResult != null) {
             val line = textLayoutResult!!.getLineForOffset(highlightRange.first)
             val lineTopY = textLayoutResult!!.getLineTop(line) - 100
-            coroutineScope.launch {
-                scrollState.animateScrollTo(lineTopY.toInt().coerceAtLeast(0))
-            }
+            coroutineScope.launch { scrollState.animateScrollTo(lineTopY.toInt().coerceAtLeast(0)) }
         }
     }
 
@@ -138,8 +224,8 @@ private fun StoryScreenContent(
                             color = MaterialTheme.colorScheme.onPrimary,
                             background = MaterialTheme.colorScheme.primary
                         ),
-                        start = highlightRange.first,
-                        end = highlightRange.last
+                        start = highlightRange.first.coerceAtLeast(0),
+                        end = highlightRange.last.coerceAtMost(storyText.length)
                     )
                 }
             }
@@ -153,10 +239,10 @@ private fun StoryScreenContent(
             choices.forEach { choice ->
                 Button(
                     onClick = { onChoiceSelected(choice.nextNodeId) },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
-                ) {
-                    Text(text = choice.text, modifier = Modifier.padding(8.dp))
-                }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) { Text(text = choice.text, modifier = Modifier.padding(8.dp)) }
             }
         }
     }

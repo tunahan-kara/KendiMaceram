@@ -23,6 +23,7 @@ class StoryViewModel @Inject constructor(
 
     private var storyNodes: Map<String, StoryNode> = emptyMap()
 
+
     fun loadStory(storyDocId: String) {
         if (storyDocId.isEmpty() || storyDocId == "{storyId}") return
 

@@ -1,9 +1,7 @@
 package com.kendimaceram.app.data
 
-import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
-import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
