@@ -91,8 +91,9 @@ class MainActivity : ComponentActivity() {
                                 LoginScreen(
                                     onSignedIn = { user ->
                                         // kullanıcı giriş yaptı → home ekranına git
-                                        navController.navigate("home") {
-                                            popUpTo("login") { inclusive = true }
+                                        navController.navigate(Screen.NewStories.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true } // geri tuşunda login’e dönmesin
+                                            launchSingleTop = true
                                         }
                                     }
                                 )

@@ -80,7 +80,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     //Google Sign-in
-    implementation("com.google.android.gms:play-services-auth")
+    implementation("com.google.android.gms:play-services-auth:21.4.0")
 
     // --- FIREBASE ---
     implementation(platform(libs.firebase.bom))
