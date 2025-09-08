@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "755702357512",
+    "project_id": "kendimaceram",
+    "storage_bucket": "kendimaceram.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:755702357512:android:0a8777663dabf8d25bfbbd",
+        "android_client_info": {
+          "package_name": "com.kendimaceram.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "755702357512-biijoha36qui713p6ja55tb9p0nqgq8l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kendimaceram.app",
+            "certificate_hash": "8fb2a660551ee7d5db3091c4429adda1edf01894"
+          }
+        },
+        {
+          "client_id": "755702357512-p82vveosl43adna3vp9j2mskn8lk3grb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC2lIbV0w8rNeb6iQb8xA8Aweg1FXM6HDw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "755702357512-p82vveosl43adna3vp9j2mskn8lk3grb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

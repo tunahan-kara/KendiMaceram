@@ -88,7 +88,14 @@ class MainActivity : ComponentActivity() {
                                 enterTransition = { fadeIn(animationSpec = tween(700)) },
                                 exitTransition = { fadeOut(animationSpec = tween(700)) }
                             ) {
-                                LoginScreen(navController = navController)
+                                LoginScreen(
+                                    onSignedIn = { user ->
+                                        // kullanıcı giriş yaptı → home ekranına git
+                                        navController.navigate("home") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    }
+                                )
                             }
                             composable(
                                 route = Screen.Register.route,
