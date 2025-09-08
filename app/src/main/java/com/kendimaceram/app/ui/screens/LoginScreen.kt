@@ -14,12 +14,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,13 +36,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -67,6 +73,10 @@ fun LoginScreen(
 
     var loading by remember { mutableStateOf(false) }
     var errorText by remember { mutableStateOf<String?>(null) }
+
+    // Terms dialog state
+    var showPrivacy by remember { mutableStateOf(false) }
+    var showTerms by remember { mutableStateOf(false) }
 
     // Google Sign-In launcher
     val signInLauncher = rememberLauncherForActivityResult(
@@ -164,12 +174,29 @@ fun LoginScreen(
             Spacer(Modifier.height(12.dp))
 
             TermsFooter(
-                text = "Giriş yaparak Gizlilik Politikası ve Kullanım Şartları’nı kabul etmiş olursun.",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(horizontal = 12.dp),
+                onPrivacyClick = { showPrivacy = true },
+                onTermsClick = { showTerms = true }
             )
         }
+    }
+
+    // Dialogs
+    if (showPrivacy) {
+        TermsDialog(
+            title = "Gizlilik Politikası",
+            body = PRIVACY_PLACEHOLDER,
+            onDismiss = { showPrivacy = false }
+        )
+    }
+    if (showTerms) {
+        TermsDialog(
+            title = "Kullanım Şartları",
+            body = TERMS_PLACEHOLDER,
+            onDismiss = { showTerms = false }
+        )
     }
 }
 
@@ -350,27 +377,215 @@ private fun FaceIdHalo(
     }
 }
 
-/* -------------------- Terms Footer -------------------- */
+/* -------------------- Terms: linkli dipnot & dialog -------------------- */
 
 @Composable
 private fun TermsFooter(
-    text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPrivacyClick: () -> Unit,
+    onTermsClick: () -> Unit
 ) {
-    Text(
+    val text = buildAnnotatedString {
+        append("Giriş yaparak ")
+
+        pushStringAnnotation(tag = "PRIVACY", annotation = "privacy")
+        withStyle(
+            style = androidx.compose.ui.text.SpanStyle(
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline
+            )
+        ) { append("Gizlilik Politikası") }
+        pop()
+
+        append(" ve ")
+
+        pushStringAnnotation(tag = "TERMS", annotation = "terms")
+        withStyle(
+            style = androidx.compose.ui.text.SpanStyle(
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                textDecoration = TextDecoration.Underline
+            )
+        ) { append("Kullanım Şartları") }
+        pop()
+
+        append("’nı kabul etmiş olursun.")
+    }
+
+    androidx.compose.foundation.text.ClickableText(
         text = text,
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
         style = MaterialTheme.typography.labelSmall.copy(
-            fontWeight = FontWeight.Normal,
             fontSize = 11.sp,
-            lineHeight = 14.sp
+            lineHeight = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+            textAlign = TextAlign.Center
         ),
-        textAlign = TextAlign.Center
+        modifier = modifier,
+        onClick = { offset ->
+            text.getStringAnnotations("PRIVACY", offset, offset).firstOrNull()?.let { onPrivacyClick() }
+            text.getStringAnnotations("TERMS", offset, offset).firstOrNull()?.let { onTermsClick() }
+        }
     )
 }
 
-/* -------------------- Google client helper -------------------- */
+@Composable
+private fun TermsDialog(
+    title: String,
+    body: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false) // genişliği biz ayarlayalım
+    ) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            tonalElevation = 6.dp,
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .wrapContentHeight()
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                Box(Modifier.fillMaxWidth()) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    )
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Kapat")
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
+                Divider()
+                Spacer(Modifier.height(8.dp))
+
+                // Kaydırılabilir içerik
+                val scroll = rememberScrollState()
+                Text(
+                    text = body,
+                    style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 180.dp, max = 420.dp)
+                        .verticalScroll(scroll)
+                )
+                Spacer(Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Kapat")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* -------------------- Placeholder içerikler -------------------- */
+
+private const val PRIVACY_PLACEHOLDER = """
+Gizlilik Politikası
+
+Kendi Maceram uygulaması (“Uygulama”), kullanıcılarının gizliliğini ve kişisel verilerinin korunmasını son derece önemsemektedir. Bu Gizlilik Politikası, Uygulama üzerinden toplanan kişisel verilerin hangi amaçlarla işlendiğini, nasıl saklandığını, kimlerle paylaşıldığını ve kullanıcıların bu verilere ilişkin haklarını açıklamaktadır.
+
+1. Toplanan Veriler
+- Kimlik Verileri: Google hesabı ile giriş yapıldığında ad, soyad, e-posta adresi ve profil fotoğrafı.
+- Kullanım Verileri: Uygulama içerisinde ziyaret edilen sayfalar, okunan hikâyeler, yapılan seçimler ve kullanım istatistikleri.
+- Cihaz Verileri: Uygulamaya erişimde kullanılan cihaz türü, işletim sistemi ve sürümü.
+
+2. Verilerin İşlenme Amaçları
+- Kullanıcı kimliğinin doğrulanması ve giriş işlemlerinin sağlanması.
+- Uygulamanın güvenliğinin sağlanması ve kötüye kullanımın önlenmesi.
+- Kullanıcı deneyiminin geliştirilmesi, içeriklerin kişiselleştirilmesi ve yeni özelliklerin sunulması.
+- Yasal yükümlülüklerin yerine getirilmesi.
+
+3. Verilerin Saklanması ve Güvenliği
+- Kişisel veriler, güvenli sunucularda şifreleme yöntemleriyle korunur.
+- Yetkisiz erişimi önlemek amacıyla gerekli teknik ve idari tedbirler alınmıştır.
+- Veriler, yalnızca hizmetin sağlanması için gerekli süre boyunca saklanır.
+
+4. Verilerin Üçüncü Kişilerle Paylaşımı
+- Kişisel veriler, yasal bir zorunluluk olmadıkça üçüncü kişilerle paylaşılmaz.
+- Google Firebase gibi hizmet sağlayıcıları yalnızca kimlik doğrulama ve veri saklama amacıyla kullanılmaktadır.
+
+5. Kullanıcı Hakları
+Kullanıcılar aşağıdaki haklara sahiptir:
+- Kişisel verilerinin işlenip işlenmediğini öğrenme.
+- İşlenen verilere erişme ve bunların düzeltilmesini talep etme.
+- Verilerin silinmesini veya anonim hale getirilmesini isteme.
+- İşlemeye itiraz etme veya kısıtlama talep etme.
+- İlgili veri koruma otoritelerine şikâyette bulunma.
+
+6. Çocukların Gizliliği
+Uygulama 13 yaş altı çocuklara yönelik değildir. 13 yaş altındaki çocuklardan bilerek kişisel veri toplanmamaktadır.
+
+7. Değişiklikler
+Bu Gizlilik Politikası zaman zaman güncellenebilir. Güncellenen politika, Uygulama üzerinden kullanıcılara sunulur.
+
+İletişim
+Her türlü soru veya talebiniz için bizimle şu adresten iletişime geçebilirsiniz:
+E-posta: orcadev2025@gmail.com
+
+"""
+
+private const val TERMS_PLACEHOLDER = """
+Kullanım Şartları
+
+Kendi Maceram uygulamasını (“Uygulama”) indirerek ve kullanarak aşağıdaki şartları kabul etmiş olursunuz. Bu şartları kabul etmiyorsanız lütfen Uygulamayı kullanmayınız.
+
+1. Hizmetin Tanımı
+Uygulama, kullanıcılara etkileşimli hikâye deneyimi sunmayı amaçlayan bir mobil platformdur. Uygulama ücretsiz olarak sunulabilir, ancak ileride ek özellikler veya ücretli hizmetler devreye alınabilir.
+
+2. Kullanım Koşulları
+- Kullanıcı, Uygulama’yı yalnızca kişisel ve hukuka uygun amaçlarla kullanabilir.
+- Uygulama’nın herhangi bir bölümünün kopyalanması, değiştirilmesi, satılması veya ticari amaçlarla kullanılması yasaktır.
+- Uygulama’yı kullanırken yürürlükteki tüm yasalara uymak kullanıcıların sorumluluğundadır.
+
+3. Hesap ve Güvenlik
+- Google hesabı ile giriş yaparak Uygulama’ya erişim sağlanır.
+- Hesap bilgilerinin gizliliği kullanıcının sorumluluğundadır.
+- Şüpheli veya yetkisiz bir kullanım durumunda Uygulama, kullanıcıya haber vermeden erişimi askıya alabilir.
+
+4. İçerikler
+- Uygulama içerisindeki hikâyeler, metinler, grafikler ve diğer materyaller yalnızca bilgilendirme ve eğlence amaçlıdır.
+- Uygulama, kullanıcı tarafından oluşturulan içeriklerden sorumlu tutulamaz.
+- İçeriklerin doğruluğu ve sürekliliği garanti edilmez.
+
+5. Sorumluluk Reddi
+- Uygulama’nın kesintisiz, hatasız veya virüssüz çalışacağı garanti edilmez.
+- Uygulama’nın kullanımı sonucunda doğabilecek doğrudan veya dolaylı zararlardan geliştirici sorumlu tutulamaz.
+
+6. Değişiklik Hakkı
+Uygulama, önceden bildirimde bulunmaksızın hizmetin kapsamını, içeriklerini ve kullanım koşullarını değiştirme hakkını saklı tutar. Güncellenen şartlar Uygulama’da yayımlandığı andan itibaren geçerli olur.
+
+7. Fesih
+Kullanıcı, bu şartlara aykırı davranması halinde Uygulama’yı kullanma hakkını kaybeder ve hesabı kapatılabilir.
+
+8. Uygulanacak Hukuk
+Bu şartlar, yürürlükteki Türkiye Cumhuriyeti yasalarına tabidir. Her türlü uyuşmazlıkta İstanbul Mahkemeleri ve İcra Daireleri yetkilidir.
+
+İletişim
+Kullanım şartlarıyla ilgili her türlü sorunuz için bizimle iletişime geçebilirsiniz:
+E-posta: orcadev2025@gmail.com
+
+"""
+
+/* -------------------- Google client helper & util -------------------- */
 
 private fun googleClient(context: android.content.Context): GoogleSignInClient {
     val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -379,8 +594,6 @@ private fun googleClient(context: android.content.Context): GoogleSignInClient {
         .build()
     return GoogleSignIn.getClient(context, gso)
 }
-
-/* -------------------- Small util -------------------- */
 
 private fun lerpFloat(start: Float, end: Float, t: Float): Float {
     return start + (end - start) * t
