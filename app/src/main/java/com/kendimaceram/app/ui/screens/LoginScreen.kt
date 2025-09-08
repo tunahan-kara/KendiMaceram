@@ -28,11 +28,15 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow // ✅ DOĞRU import
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -56,7 +60,7 @@ fun LoginScreen(
     val activity = context as Activity
     val auth = remember { FirebaseAuth.getInstance() }
 
-    // Eğer kullanıcı zaten girişliyse login'i atla
+    // Zaten girişliyse atla
     LaunchedEffect(Unit) {
         auth.currentUser?.let { onSignedIn(it) }
     }
@@ -103,17 +107,15 @@ fun LoginScreen(
     }
 
     // --- UI ---
-    GradientBackground(
-        modifier = modifier.fillMaxSize()
-    ) {
+    GradientBackground(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
-                .padding(top = 64.dp, bottom = 32.dp),
+                .padding(top = 64.dp, bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            FancyHeader(
+            GraffitiHeader(
                 text = "Kendi Maceranı yazmaya hazır mısın?",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -131,7 +133,7 @@ fun LoginScreen(
                 val haloSize = 220.dp
                 if (loading) {
                     FaceIdHalo(
-                        haloSizeDp = haloSize,         // ✅ isim değişti
+                        haloSizeDp = haloSize,
                         ringCount = 3,
                         baseColor = Color.White.copy(alpha = 0.85f),
                         strokeWidth = 3.dp
@@ -149,7 +151,7 @@ fun LoginScreen(
             }
 
             if (errorText != null) {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(
                     text = errorText!!,
                     color = MaterialTheme.colorScheme.error,
@@ -159,57 +161,102 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(Modifier.weight(1.2f))
+            Spacer(Modifier.height(12.dp))
+
+            TermsFooter(
+                text = "Giriş yaparak Gizlilik Politikası ve Kullanım Şartları’nı kabul etmiş olursun.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            )
         }
     }
 }
 
-/* -------------------- Helpers & UI Pieces -------------------- */
+/* -------------------- Gradient: app paletine uyumlu -------------------- */
 
 @Composable
 private fun GradientBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val c1 = MaterialTheme.colorScheme.primary
-    val c2 = MaterialTheme.colorScheme.secondary
-    val c3 = MaterialTheme.colorScheme.tertiary
+    val scheme = MaterialTheme.colorScheme
+    val isDark = androidx.compose.foundation.isSystemInDarkTheme()
+
+    // Üstte canlı primary, orta yüzey, altta arka plan — koyuya akış
+    val c1 = if (isDark) scheme.primary.copy(alpha = 0.95f) else scheme.primary
+    val c2 = if (isDark) scheme.surface.copy(alpha = 0.90f) else scheme.surface.copy(alpha = 0.94f)
+    val c3 = if (isDark) scheme.background.copy(alpha = 0.92f) else scheme.background.copy(alpha = 0.98f)
 
     Box(
         modifier = modifier.background(
             brush = Brush.linearGradient(
-                colors = listOf(
-                    c1.copy(alpha = 0.95f),
-                    c2.copy(alpha = 0.90f),
-                    c3.copy(alpha = 0.85f)
-                )
+                colors = listOf(c1, c2, c3),
+                start = Offset(0f, 0f),          // sol-üst
+                end = Offset(1200f, 1700f)       // sağ-alt
             )
         )
     ) { content() }
 }
 
+/* -------------------- Başlık: tek görünümlü 3D/graffiti -------------------- */
+
 @Composable
-private fun FancyHeader(
+private fun GraffitiHeader(
     text: String,
     modifier: Modifier = Modifier
 ) {
-    Text(
-        text = text,
-        modifier = modifier,
-        color = Color.White,
-        lineHeight = 36.sp,
-        style = MaterialTheme.typography.headlineMedium.copy(
-            fontWeight = FontWeight.ExtraBold,
-            fontSize = 28.sp,
-            shadow = Shadow( // ✅ graphics.Shadow
-                color = Color.Black.copy(alpha = 0.25f),
-                offset = Offset(0f, 4f),
-                blurRadius = 8f
-            )
-        ),
-        textAlign = TextAlign.Center
-    )
+    val graffitiFamily: FontFamily? = runCatching {
+        // res/font/graffiti.ttf eklediğinde otomatik devreye girer
+        FontFamily(Font(resId = R.font.graffiti))
+    }.getOrNull()
+
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        // Arka katman (gölge / 3D)
+        Text(
+            text = text,
+            color = Color.Black.copy(alpha = 0.45f),
+            lineHeight = 38.sp,
+            style = TextStyle(
+                fontFamily = graffitiFamily ?: MaterialTheme.typography.headlineMedium.fontFamily,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 30.sp,
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = 0.35f),
+                    offset = Offset(0f, 6f),
+                    blurRadius = 10f
+                ),
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset(x = 3.dp, y = 3.dp)
+        )
+
+        // Ön katman (parlak)
+        Text(
+            text = text,
+            color = Color.White,
+            lineHeight = 38.sp,
+            style = TextStyle(
+                fontFamily = graffitiFamily ?: MaterialTheme.typography.headlineMedium.fontFamily,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 30.sp,
+                shadow = Shadow(
+                    color = Color.Black.copy(alpha = 0.20f),
+                    offset = Offset(0f, 3f),
+                    blurRadius = 6f
+                ),
+                platformStyle = PlatformTextStyle(includeFontPadding = false)
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
+
+/* -------------------- Google Button -------------------- */
 
 @Composable
 private fun GoogleSignInButton(
@@ -223,13 +270,13 @@ private fun GoogleSignInButton(
         enabled = enabled,
         modifier = modifier
             .height(56.dp)
-            .shadow(8.dp, shape = RoundedCornerShape(16.dp), clip = false),
-        shape = RoundedCornerShape(16.dp),
+            .shadow(10.dp, shape = RoundedCornerShape(18.dp), clip = false),
+        shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.elevatedButtonColors(
             containerColor = Color.White,
-            contentColor = Color.Black.copy(alpha = 0.9f),
+            contentColor = Color.Black.copy(alpha = 0.92f),
             disabledContainerColor = Color.White.copy(alpha = 0.85f),
-            disabledContentColor = Color.Black.copy(alpha = 0.5f)
+            disabledContentColor = Color.Black.copy(alpha = 0.55f)
         )
     ) {
         Row(
@@ -237,7 +284,6 @@ private fun GoogleSignInButton(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Google simgesi — drawable yoksa kırılsa bile UI çalışır
             runCatching {
                 Image(
                     painter = painterResource(id = R.drawable.ic_google),
@@ -247,7 +293,6 @@ private fun GoogleSignInButton(
                         .clip(CircleShape)
                 )
             }
-
             Spacer(Modifier.width(12.dp))
             Text(
                 text = text,
@@ -260,10 +305,8 @@ private fun GoogleSignInButton(
     }
 }
 
-/**
- * Samsung Face ID hissi: butonun etrafında genişleyip sönümlenen halkalar.
- * DİKKAT: Parametre adı `haloSizeDp`, Canvas içindeki `this.size` ile karışmasın.
- */
+/* -------------------- Halo (Samsung Face ID hissi) -------------------- */
+
 @Composable
 private fun FaceIdHalo(
     haloSizeDp: Dp,
@@ -286,10 +329,8 @@ private fun FaceIdHalo(
         strokeWidth.value * density
     }
 
-    Canvas(
-        modifier = Modifier.size(haloSizeDp)
-    ) {
-        val maxR = this.size.minDimension / 2f // ✅ DrawScope.size.minDimension
+    Canvas(modifier = Modifier.size(haloSizeDp)) {
+        val maxR = this.size.minDimension / 2f
 
         for (i in 0 until ringCount) {
             val offset = i.toFloat() / ringCount
@@ -307,6 +348,26 @@ private fun FaceIdHalo(
             )
         }
     }
+}
+
+/* -------------------- Terms Footer -------------------- */
+
+@Composable
+private fun TermsFooter(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Normal,
+            fontSize = 11.sp,
+            lineHeight = 14.sp
+        ),
+        textAlign = TextAlign.Center
+    )
 }
 
 /* -------------------- Google client helper -------------------- */
