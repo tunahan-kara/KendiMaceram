@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,6 +35,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import com.kendimaceram.app.ui.screens.LoginScreen
 import com.kendimaceram.app.ui.screens.SplashScreen
+import androidx.core.view.WindowInsetsCompat
 import com.kendimaceram.app.ui.theme.GPDarkGreen
 import com.kendimaceram.app.ui.theme.GPDarkPurple
 
@@ -46,6 +48,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+        insetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        // Üst + alt barları gizle (API 24+ uyumlu)
+        insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        // Sadece alt çubuğu gizlemek istersen:
+        // insetsController.hide(WindowInsetsCompat.Type.navigationBars())
 
         setContent {
             val themeSetting by settingsRepository.themeSettingFlow.collectAsState(initial = ThemeSetting.SYSTEM)

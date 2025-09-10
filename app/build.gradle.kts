@@ -86,6 +86,8 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation("com.google.firebase:firebase-storage-ktx")
+
 
     // Analytics & Crashlytics
     implementation("com.google.firebase:firebase-analytics")
