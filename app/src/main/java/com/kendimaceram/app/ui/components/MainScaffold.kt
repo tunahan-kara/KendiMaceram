@@ -12,6 +12,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.kendimaceram.app.ui.navigation.Screen
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +30,10 @@ fun MainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val bottomNavRoutes = listOf(Screen.MyStories.route, Screen.NewStories.route, Screen.Premium.route, Screen.Profile.route)
+    val bottomNavRoutes = listOf(
+        Screen.MyStories.route, Screen.NewStories.route,
+        Screen.Premium.route, Screen.Profile.route
+    )
     val shouldShowBottomBar = currentRoute in bottomNavRoutes
 
     val screenTitle = when (currentRoute) {
@@ -39,16 +49,17 @@ fun MainScaffold(
         else -> ""
     }
 
-    val showBackButton = navController.previousBackStackEntry != null && currentRoute != Screen.Splash.route
+    val showBackButton =
+        navController.previousBackStackEntry != null && currentRoute != Screen.Splash.route
 
     Scaffold(
         containerColor = Color.Transparent,
-        contentWindowInsets = WindowInsets(0),
-                topBar = {
+
+        topBar = {
             if (screenTitle.isNotEmpty()) {
                 CenterAlignedTopAppBar(
+                    modifier = Modifier.systemBarsPadding(),
                     title = { Text(text = screenTitle, fontWeight = FontWeight.Bold) },
-                    // DEĞİŞİKLİK BURADA: Üst barın rengini tamamen şeffaf yapıyoruz.
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color.Transparent
                     ),

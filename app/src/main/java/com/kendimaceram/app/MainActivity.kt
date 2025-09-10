@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -35,28 +36,24 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import com.kendimaceram.app.ui.screens.LoginScreen
 import com.kendimaceram.app.ui.screens.SplashScreen
-import androidx.core.view.WindowInsetsCompat
 import com.kendimaceram.app.ui.theme.GPDarkGreen
 import com.kendimaceram.app.ui.theme.GPDarkPurple
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    @Inject
-    lateinit var settingsRepository: SettingsRepository
+    @Inject lateinit var settingsRepository: SettingsRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Edge-to-edge açık kalsın
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-        insetsController.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
-        // Üst + alt barları gizle (API 24+ uyumlu)
-        insetsController.hide(WindowInsetsCompat.Type.systemBars())
-        // Sadece alt çubuğu gizlemek istersen:
-        // insetsController.hide(WindowInsetsCompat.Type.navigationBars())
+        // SADECE alt navigation bar'ı gizle
+        val ic = WindowCompat.getInsetsController(window, window.decorView)
+        ic.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        ic.hide(WindowInsetsCompat.Type.navigationBars())
 
         setContent {
             val themeSetting by settingsRepository.themeSettingFlow.collectAsState(initial = ThemeSetting.SYSTEM)
@@ -64,7 +61,6 @@ class MainActivity : ComponentActivity() {
                 ThemeSetting.SYSTEM -> isSystemInDarkTheme()
                 ThemeSetting.LIGHT -> false
                 ThemeSetting.DARK -> true
-
             }
 
             KendiMaceramTheme(darkTheme = useDarkTheme) {
@@ -73,122 +69,97 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(
-                                    GPDarkPurple,
-                                    GPDarkGreen,
-                                    MaterialTheme.colorScheme.background
-                                )
+                                colors = listOf(GPDarkPurple, GPDarkGreen, MaterialTheme.colorScheme.background)
                             )
                         )
                 ) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        // Surface'i şeffaf yapıyoruz ki arkasındaki gradient görünsün
-                        color = Color.Transparent
-                    ) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = Color.Transparent) {
                         val navController = rememberNavController()
-                        NavHost(
-                            navController = navController,
-                            startDestination = Screen.Splash.route
-                        ) {
-                            composable(route = Screen.Splash.route) {
-                                SplashScreen(navController = navController)
-                            }
+                        NavHost(navController = navController, startDestination = Screen.Splash.route) {
+                            composable(Screen.Splash.route) { SplashScreen(navController) }
                             composable(
-                                route = Screen.Login.route,
-                                enterTransition = { fadeIn(animationSpec = tween(700)) },
-                                exitTransition = { fadeOut(animationSpec = tween(700)) }
+                                Screen.Login.route,
+                                enterTransition = { fadeIn(tween(700)) },
+                                exitTransition = { fadeOut(tween(700)) }
                             ) {
                                 LoginScreen(
-                                    onSignedIn = { user ->
-                                        // kullanıcı giriş yaptı → home ekranına git
+                                    onSignedIn = {
                                         navController.navigate(Screen.NewStories.route) {
-                                            popUpTo(Screen.Login.route) { inclusive = true } // geri tuşunda login’e dönmesin
+                                            popUpTo(Screen.Login.route) { inclusive = true }
                                             launchSingleTop = true
                                         }
                                     }
                                 )
                             }
                             composable(
-                                route = Screen.Register.route,
-                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) },
-                                exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }) }
+                                Screen.Register.route,
+                                enterTransition = { slideInHorizontally { 1000 } },
+                                exitTransition = { slideOutHorizontally { -1000 } }
+                            ) { RegisterScreen(navController) }
+
+                            composable(Screen.MyStories.route,
+                                enterTransition = { fadeIn(tween(300)) },
+                                exitTransition = { fadeOut(tween(300)) }
+                            ) { MyStoriesScreen(navController) }
+
+                            composable(Screen.NewStories.route,
+                                enterTransition = { fadeIn(tween(300)) },
+                                exitTransition = { fadeOut(tween(300)) }
+                            ) { NewStoriesScreen(navController) }
+
+                            composable(Screen.Premium.route,
+                                enterTransition = { fadeIn(tween(300)) },
+                                exitTransition = { fadeOut(tween(300)) }
+                            ) { PremiumScreen(navController) }
+
+                            composable(Screen.Profile.route,
+                                enterTransition = { fadeIn(tween(300)) },
+                                exitTransition = { fadeOut(tween(300)) }
+                            ) { ProfileScreen(navController) }
+
+                            composable(Screen.AccountInfo.route,
+                                enterTransition = { slideInHorizontally { 1000 } }
+                            ) { AccountInfoScreen(navController) }
+
+                            composable(Screen.NotificationSettings.route,
+                                enterTransition = { slideInHorizontally { 1000 } }
+                            ) { NotificationSettingsScreen(navController) }
+
+                            composable(Screen.ThemeSettings.route,
+                                enterTransition = { slideInHorizontally { 1000 } }
+                            ) { ThemeSettingsScreen(navController) }
+
+                            composable(Screen.Help.route,
+                                enterTransition = { slideInHorizontally { 1000 } }
+                            ) { HelpScreen(navController) }
+
+                            composable(
+                                Screen.StoryDetail.route,
+                                arguments = listOf(navArgument("storyId") { type = NavType.StringType })
                             ) {
-                                RegisterScreen(navController = navController)
+                                val storyId = it.arguments?.getString("storyId") ?: ""
+                                StoryDetailScreen(navController, storyId)
                             }
                             composable(
-                                route = Screen.MyStories.route,
-                                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                                exitTransition = { fadeOut(animationSpec = tween(300)) }
+                                Screen.StoryReader.route,
+                                arguments = listOf(navArgument("storyId") { type = NavType.StringType })
                             ) {
-                                MyStoriesScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.NewStories.route,
-                                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                                exitTransition = { fadeOut(animationSpec = tween(300)) }
-                            ) {
-                                NewStoriesScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.Premium.route,
-                                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                                exitTransition = { fadeOut(animationSpec = tween(300)) }
-                            ) {
-                                PremiumScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.Profile.route,
-                                enterTransition = { fadeIn(animationSpec = tween(300)) },
-                                exitTransition = { fadeOut(animationSpec = tween(300)) }
-                            ) {
-                                ProfileScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.AccountInfo.route,
-                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
-                            ) {
-                                AccountInfoScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.NotificationSettings.route,
-                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
-                            ) {
-                                NotificationSettingsScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.ThemeSettings.route,
-                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
-                            ) {
-                                ThemeSettingsScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.Help.route,
-                                enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) }
-                            ) {
-                                HelpScreen(navController = navController)
-                            }
-                            composable(
-                                route = Screen.StoryDetail.route,
-                                arguments = listOf(navArgument("storyId") {
-                                    type = NavType.StringType
-                                })
-                            ) { backStackEntry ->
-                                val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
-                                StoryDetailScreen(navController = navController, storyId = storyId)
-                            }
-                            composable(
-                                route = Screen.StoryReader.route,
-                                arguments = listOf(navArgument("storyId") {
-                                    type = NavType.StringType
-                                })
-                            ) { backStackEntry ->
-                                val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
-                                StoryReaderScreen(navController = navController, storyId = storyId)
+                                val storyId = it.arguments?.getString("storyId") ?: ""
+                                StoryReaderScreen(navController, storyId)
                             }
                         }
                     }
                 }
             }
         }
-    }}
+    }
+
+    // Odak geri geldiğinde bazı OEM'ler barı gösterir; tekrar gizle
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            WindowCompat.getInsetsController(window, window.decorView)
+                .hide(WindowInsetsCompat.Type.navigationBars())
+        }
+    }
+}
