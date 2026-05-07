@@ -2,7 +2,7 @@
 
 **Kendi Maceram**, kullanıcıların hikayenin gidişatını kendi seçimleriyle belirlediği, her kararın farklı bir yola saptığı interaktif bir **"kendi maceranı seç" (choose your own adventure)** mobil platformudur. 
 
-Modern Android geliştirme standartları (Jetpack Compose, Clean Architecture) ile inşa edilen uygulama, sadece bir okuma platformu değil, aynı zamanda TTS (seslendirme) ve zengin bir admin yönetim paneli içeren kapsamlı bir ekosistemdir.
+Firebase tabanına dayanan ve modern Android geliştirme standartları (Jetpack Compose, Clean Architecture) ile inşa edilen uygulama, sadece bir okuma platformu değil, aynı zamanda TTS (seslendirme) ve zengin bir admin yönetim paneli içeren kapsamlı bir ekosistemdir.
 
 ---
 
